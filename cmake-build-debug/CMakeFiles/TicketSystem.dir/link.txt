@@ -1,0 +1,1 @@
+/usr/bin/c++  -g   CMakeFiles/TicketSystem.dir/src/BPT.cpp.o  -o TicketSystem 
