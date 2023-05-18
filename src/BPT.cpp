@@ -7,7 +7,6 @@
 #include "vector.h"
 #include "function.h"
 
-using index_type = char[64];
 using value_type = int;
 
 const int M = 120; // M叉树
@@ -15,7 +14,7 @@ const int M_min = 60;
 const int BlockSize = 320; // 数据块大小
 const int minSize = 160;
 
-
+template<typename index_type>
 class BPT {
 public:
     sjtu::vector<int> storage_T; // store unused tag of tree;
@@ -735,7 +734,7 @@ int main() {
 //    freopen("b.in", "r", stdin);
 //    freopen("b.out", "w", stdout);
     std::ios::sync_with_stdio(false);
-    BPT bpt("0tree", "0record", "0inf");
+    BPT<char[64]> bpt("0tree", "0record", "0inf");
     int n;
     std::string instruct;
     char index[64];
