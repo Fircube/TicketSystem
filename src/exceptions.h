@@ -1,5 +1,5 @@
-#ifndef SJTU_EXCEPTIONS_HPP
-#define SJTU_EXCEPTIONS_HPP
+#ifndef TICKETSYSTEM_SRC_EXCEPTIONS_H
+#define TICKETSYSTEM_SRC_EXCEPTIONS_H
 
 #include <cstddef>
 #include <cstring>
@@ -36,4 +36,4 @@ class container_is_empty : public exception {
 };
 }
 
-#endif
+#endif //TICKETSYSTEM_SRC_EXCEPTIONS_H

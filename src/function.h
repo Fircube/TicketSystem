@@ -1,5 +1,5 @@
-#ifndef TICKETSYSTEM_FUNCTION_H
-#define TICKETSYSTEM_FUNCTION_H
+#ifndef TICKETSYSTEM_SRC_FUNCTION_H
+#define TICKETSYSTEM_SRC_FUNCTION_H
 #include<iostream>
 #include<cmath>
 #include<cstdio>
@@ -49,4 +49,4 @@ namespace sjtu {
 
 }
 
-#endif //TICKETSYSTEM_FUNCTION_H
+#endif //TICKETSYSTEM_SRC_FUNCTION_H

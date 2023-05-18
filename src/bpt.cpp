@@ -15,7 +15,7 @@ const int BlockSize = 320; // 数据块大小
 const int minSize = 160;
 
 template<typename index_type>
-class BPT {
+class bpt {
 public:
     sjtu::vector<int> storage_T; // store unused tag of tree;
     sjtu::vector<int> storage_R; // store unused tag of storage;
@@ -157,9 +157,9 @@ public:
         StorageOfRecord.write(reinterpret_cast<char *>(&write_), sizeof(Record));
     }
 
-    BPT() = default;
+    bpt() = default;
 
-    BPT(const std::string &fileName1, const std::string &fileName2, const std::string &fileName3) {
+    bpt(const std::string &fileName1, const std::string &fileName2, const std::string &fileName3) {
         FilenameOfTree = fileName1;
         FilenameOfRecord = fileName2;
         FilenameOfInf = fileName3;
@@ -189,7 +189,7 @@ public:
         }
     }
 
-    ~BPT() {
+    ~bpt() {
         StorageOfInf.seekp(0);
         StorageOfInf.write(reinterpret_cast <const char *> (&total_T), sizeof(int));
         StorageOfInf.write(reinterpret_cast <const char *> (&total_R), sizeof(int));
@@ -734,7 +734,7 @@ int main() {
 //    freopen("b.in", "r", stdin);
 //    freopen("b.out", "w", stdout);
     std::ios::sync_with_stdio(false);
-    BPT<char[64]> bpt("0tree", "0record", "0inf");
+    bpt<char[64]> bpt("0tree", "0record", "0inf");
     int n;
     std::string instruct;
     char index[64];

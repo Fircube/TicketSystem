@@ -1,5 +1,5 @@
-#ifndef TICKETSYSTEM_VECTOR_H
-#define TICKETSYSTEM_VECTOR_H
+#ifndef TICKETSYSTEM_SRC_VECTOR_H
+#define TICKETSYSTEM_SRC_VECTOR_H
 
 #include<iostream>
 #include<cmath>
@@ -7,7 +7,7 @@
 #include<cstring>
 #include<string>
 #include<fstream>
-#include"exceptions.hpp"
+#include"exceptions.h"
 
 namespace sjtu {
     template<typename T>
@@ -506,4 +506,4 @@ namespace sjtu {
         }
     };
 }
-#endif //TICKETSYSTEM_VECTOR_H
+#endif //TICKETSYSTEM_SRC_VECTOR_H
