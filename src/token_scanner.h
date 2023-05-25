@@ -80,10 +80,10 @@ public:
             tmp = nextToken();
         }
         if (user_system.amount) {
-            std::cout<<user_system.AddUser(cur_user, new_user, new_inf);
+            std::cout << user_system.AddUser(cur_user, new_user, new_inf)<<'\n';
         } else {
             new_inf.privilege_ = 10;
-            std::cout<<user_system.AddFirstUser(new_user, new_inf)<<'\n';
+            std::cout << user_system.AddFirstUser(new_user, new_inf) << '\n';
         }
     }
 
@@ -102,7 +102,7 @@ public:
             }
             tmp = nextToken();
         }
-        std::cout<<user_system.Login(user, password)<<'\n';
+        std::cout << user_system.Login(user, password) << '\n';
     }
 
     void Logout(UserSystem &user_system) {
@@ -116,7 +116,7 @@ public:
             }
             tmp = nextToken();
         }
-        std::cout<<user_system.Logout(user)<<'\n';
+        std::cout << user_system.Logout(user) << '\n';
     }
 
     void QueryProfile(UserSystem &user_system) {
@@ -134,11 +134,64 @@ public:
             }
             tmp = nextToken();
         }
-        user_system.QueryProfile(cur_user,q_user);
+        user_system.QueryProfile(cur_user, q_user);
     }
 
+//    [445] modify_profile -m European.Powers@to.be -n 清道 -c Hung -u Scavenger
     void ModifyProfile(UserSystem &user_system) {
-        
+        std::string tmp = nextToken();
+        bool if_modify[4];
+        memset(if_modify,false,sizeof(bool)*4);
+        User m_inf;
+        char cur_user[21], m_user[21];
+        memset(cur_user, 0, sizeof(cur_user));
+        memset(m_user, 0, sizeof(m_user));
+        while (!tmp.empty()) {
+            if (tmp == "-c") {
+                tmp = nextToken();
+                strcpy(cur_user, tmp.c_str());
+            } else if (tmp == "-u") {
+                tmp = nextToken();
+                strcpy(m_user, tmp.c_str());
+            } else if (tmp == "-p") {
+                tmp = nextToken();
+                strcpy(m_inf.password_, tmp.c_str());
+                if_modify[0] = true;
+            } else if (tmp == "-n") {
+                tmp = nextToken();
+                strcpy(m_inf.name_, tmp.c_str());
+                if_modify[1] = true;
+            } else if (tmp == "-m") {
+                tmp = nextToken();
+                strcpy(m_inf.mail_addr_, tmp.c_str());
+                if_modify[2] = true;
+            } else if (tmp == "-g") {
+                tmp = nextToken();
+                if (tmp.length() > 1) m_inf.privilege_ = 10;
+                else m_inf.privilege_ = (short) (tmp[0] - '0');
+                if_modify[3] = true;
+            }
+            tmp = nextToken();
+        }
+        User pre_inf;
+        if (user_system.ModifyProfile(cur_user, m_user, m_inf.privilege_, pre_inf)) {
+            if (if_modify[0]) {
+                strcpy(pre_inf.password_,m_inf.password_);
+            }
+            if(if_modify[1]){
+                strcpy(pre_inf.name_,m_inf.name_);
+            }
+            if(if_modify[2]){
+                strcpy(pre_inf.mail_addr_,m_inf.mail_addr_);
+            }
+            if(if_modify[3]){
+                pre_inf.privilege_=m_inf.privilege_;
+            }
+            user_system.writeFile(pre_inf, pre_inf.tag_);
+            std::cout << pre_inf.username_ << ' ' << pre_inf.name_ << ' ' << pre_inf.mail_addr_ << ' ' << pre_inf.privilege_ << '\n';
+        } else {
+            std::cout << "-1\n";
+        }
     }
 
     /*

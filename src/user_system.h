@@ -17,7 +17,7 @@ public:
     char password_[31];
     char name_[16];
     char mail_addr_[31];
-    short int privilege_;
+    short int privilege_=-1;
 
     User() {
         memset(username_, 0, sizeof(username_));
@@ -108,7 +108,12 @@ public:
 
     int AddFirstUser(const char (&new_user)[21], User &new_inf) {
         user_map_.insert(new_user, amount);
+        new_inf.tag_=amount;
         writeFile(new_inf, amount);
+        User inf;
+        readFile(inf, 0);
+        writeFile(new_inf, 0);
+        readFile(inf, 0);
         ++amount;
         return 0;
     }
@@ -125,6 +130,7 @@ public:
         int new_tag = user_map_.find(new_user);
         if (new_tag != -1) return -1; // 新用户存在
         user_map_.insert(new_user, amount);
+        new_inf.tag_=amount;
         writeFile(new_inf, amount);
         ++amount;
         return 0;
@@ -138,7 +144,7 @@ public:
         int tag = user_map_.find(user);
         if (tag == -1) return -1; // 用户不存在
         User inf;
-        readFile(inf, find->second);
+        readFile(inf, tag);
         if (strcmp(inf.password_, password) != 0) return -1; // 密码错误
         user_login_[user] = inf.tag_; // 不知道会不会有问题
         return 0;
@@ -179,8 +185,26 @@ public:
         std::cout << q_user << ' ' << q_inf.name_ << ' ' << q_inf.mail_addr_ << ' ' << q_inf.privilege_ << '\n';
     }
 
-    int ModifyProfile() {
-
+    bool ModifyProfile(const char (&cur_user)[21], const char (&m_user)[21],const short &m_privilege,User &pre_inf) {
+        auto cur_find = user_login_.find(cur_user);
+        if (cur_find == user_login_.end() || cur_find->second == -1) { // 当前用户未登录
+            return false;
+        }
+        if (strcmp(cur_user, m_user) == 0) {
+            readFile(pre_inf, cur_find->second);
+        } else {
+            int m_tag = user_map_.find(m_user);
+            if (m_tag == -1) { // 查询用户不存在
+                return false;
+            }
+            User cur_inf;
+            readFile(cur_inf, cur_find->second);
+            readFile(pre_inf, m_tag);
+            if (cur_inf.privilege_ <= pre_inf.privilege_ || cur_inf.privilege_<=m_privilege) { // 当前权限低
+                return false;
+            }
+        }
+        return true;
     }
 
     void clean() {

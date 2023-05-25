@@ -7,7 +7,8 @@
 #include "token_scanner.h"
 
 int main() {
-
+    freopen("../Ticket-System-master/testcases/data/basic_1/1.in","r",stdin);
+    freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;
 //    TrainSystem trainSystem;
