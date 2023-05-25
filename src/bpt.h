@@ -1,5 +1,6 @@
 #ifndef TICKETSYSTEM_SRC_BPT_H
 #define TICKETSYSTEM_SRC_BPT_H
+
 #include<iostream>
 #include<cmath>
 #include<cstdio>
@@ -438,10 +439,10 @@ public:
                     writeTree(*t, t->tag);
                     return false;
                 } else { // 与右边合并
-                    for (int i = kBindBlockSize - 1; i < 2*kBindBlockSize - 1; ++i) {
+                    for (int i = kBindBlockSize - 1; i < 2 * kBindBlockSize - 1; ++i) {
                         tmp_R.Block[i] = tmp_R2.Block[i - kBindBlockSize + 1];
                     }
-                    tmp_R.size = 2*kBindBlockSize - 1;
+                    tmp_R.size = 2 * kBindBlockSize - 1;
                     tmp_R.next = tmp_R2.next;
                     RestoreRecordTag(tmp_R2.tag);
                     Node n_tmp;
@@ -478,10 +479,10 @@ public:
                     writeTree(*t, t->tag);
                     return false;
                 } else { // 与左边合并
-                    for (int i = kBindBlockSize; i < 2*kBindBlockSize - 1; ++i) {
+                    for (int i = kBindBlockSize; i < 2 * kBindBlockSize - 1; ++i) {
                         tmp_R2.Block[i] = tmp_R.Block[i - kBindBlockSize];
                     }
-                    tmp_R2.size = 2*kBindBlockSize - 1;
+                    tmp_R2.size = 2 * kBindBlockSize - 1;
                     tmp_R2.next = tmp_R.next;
                     RestoreRecordTag(tmp_R.tag);
                     Node n_tmp;
@@ -543,12 +544,12 @@ public:
                         return false;
                     } else { // 与右边合并
                         tmp_T->key[kBindBranch - 2] = t->key[location];
-                        for (int i = kBindBranch - 1; i < 2*kBindBranch- 2; ++i) {
+                        for (int i = kBindBranch - 1; i < 2 * kBindBranch - 2; ++i) {
                             tmp_T->key[i] = tmp_T2.key[i - kBindBranch + 1];
                             tmp_T->son[i] = tmp_T2.son[i - kBindBranch + 1];
                         }
-                        tmp_T->son[2*kBindBranch- 2] = tmp_T2.son[kBindBranch- 1];
-                        tmp_T->size = 2*kBindBranch - 1;
+                        tmp_T->son[2 * kBindBranch - 2] = tmp_T2.son[kBindBranch - 1];
+                        tmp_T->size = 2 * kBindBranch - 1;
                         RestoreTreeTag(tmp_T2.tag);
                         BPTreeNode tmp;
                         writeTree(*tmp_T, tmp_T->tag);
@@ -590,12 +591,12 @@ public:
                         return false;
                     } else { // 与左边合并
                         tmp_T2.key[kBindBranch - 1] = t->key[location - 1];
-                        for (int i = kBindBranch; i < 2*kBindBranch - 2; ++i) {
+                        for (int i = kBindBranch; i < 2 * kBindBranch - 2; ++i) {
                             tmp_T2.key[i] = tmp_T->key[i - kBindBranch];
                             tmp_T2.son[i] = tmp_T->son[i - kBindBranch];
                         }
-                        tmp_T2.son[2*kBindBranch - 2] = tmp_T->son[kBindBranch - 2];
-                        tmp_T2.size = 2*kBindBranch - 1;
+                        tmp_T2.son[2 * kBindBranch - 2] = tmp_T->son[kBindBranch - 2];
+                        tmp_T2.size = 2 * kBindBranch - 1;
                         RestoreTreeTag(tmp_T->tag);
                         BPTreeNode tmp;
                         writeTree(tmp_T2, tmp_T2.tag);
@@ -663,11 +664,10 @@ public:
     }
 
 
-    void find(const index_type &index_) {
+    int find(const index_type &index_) {
         Node tmp(index_, -1);
         if (!root->size) {
-            std::cout << "null\n";
-            return;
+            return -1;
         }
         int point;
         ca.size = 1;
@@ -685,52 +685,62 @@ public:
             if (location == tmp_R.size && strcmp(index_, tmp_R.Block[location].index) != 0) {
                 point = tmp_R.next;
                 if (point == -1) {
-                    std::cout << "null\n";
-                    return;
+                    return -1;
                 }
                 readRecord(tmp_R, point);
                 location = 0;
             }
-            bool flag = true;
+//            bool flag = true;
             if (strcmp(index_, tmp_R.Block[location].index) != 0) {
-                std::cout << "null\n";
-                return;
+                return -1;
             } else {
-                std::cout << tmp_R.Block[location].value << ' ';
-                while (location < tmp_R.size) {
-                    ++location;
-                    if (location == tmp_R.size) break;
-                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-                        std::cout << tmp_R.Block[location].value << ' ';
-                    } else {
-                        flag = false;
-                        break;
-                    }
-                }
-                while (flag and point != -1) {
-                    point = tmp_R.next;
-                    if (point != -1) {
-                        readRecord(tmp_R, point);
-                        location = -1;
-                        while (location < tmp_R.size) {
-                            ++location;
-                            if (location == tmp_R.size) break;
-                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-                                std::cout << tmp_R.Block[location].value << ' ';
-                            } else {
-                                flag = false;
-                                break;
-                            }
-                        }
-                    }
-                }
+                return tmp_R.Block[location].value;
+//                while (location < tmp_R.size) {
+//                    ++location;
+//                    if (location == tmp_R.size) break;
+//                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+//                        std::cout << tmp_R.Block[location].value << ' ';
+//                    } else {
+//                        flag = false;
+//                        break;
+//                    }
+//                }
+//                while (flag and point != -1) {
+//                    point = tmp_R.next;
+//                    if (point != -1) {
+//                        readRecord(tmp_R, point);
+//                        location = -1;
+//                        while (location < tmp_R.size) {
+//                            ++location;
+//                            if (location == tmp_R.size) break;
+//                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+//                                std::cout << tmp_R.Block[location].value << ' ';
+//                            } else {
+//                                flag = false;
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
             }
-            std::cout << '\n';
-            return;
-
+//            std::cout << '\n';
+//            return;
+//
         }
-        std::cout << "null\n";
+        return -1;
     }
 
+    void clear(){
+        storage_of_tree_tag_.clear();
+        storage_of_block_tag_.clear();
+        ca.size=0;
+        BPTreeNode tmp_;
+        ca.link[0] = tmp_;
+        head_tag = -1; // 记录第一个数据块
+
+        total_T = 0;
+        total_R = 0;
+    }
 };
+
 #endif //TICKETSYSTEM_SRC_BPT_H
