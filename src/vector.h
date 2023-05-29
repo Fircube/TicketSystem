@@ -506,4 +506,5 @@ namespace sjtu {
         }
     };
 }
+
 #endif //TICKETSYSTEM_SRC_VECTOR_H

@@ -137,7 +137,6 @@ public:
         user_system.QueryProfile(cur_user, q_user);
     }
 
-//    [445] modify_profile -m European.Powers@to.be -n 清道 -c Hung -u Scavenger
     void ModifyProfile(UserSystem &user_system) {
         std::string tmp = nextToken();
         bool if_modify[4];

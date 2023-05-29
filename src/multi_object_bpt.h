@@ -1,5 +1,5 @@
-#ifndef TICKETSYSTEM_SRC_BPT_H
-#define TICKETSYSTEM_SRC_BPT_H
+#ifndef TICKETSYSTEM_SRC_MULTI_OBJECT_MultiBPT_H
+#define TICKETSYSTEM_SRC_MULTI_OBJECT_MultiBPT_H
 
 #include<iostream>
 #include<cmath>
@@ -10,7 +10,6 @@
 #include "vector.h"
 #include "function.h"
 
-using value_type = int;
 
 const int kBranch = 120; // M叉树
 const int kHalfBranch = 60;
@@ -19,12 +18,11 @@ const int kBlockSize = 320; // 数据块大小
 const int kHalfBlockSize = 160;
 const int kBindBlockSize = 106;
 
-template<typename index_type>
-class BPT {
+template<typename index_type, typename value_type>
+class MultiBPT {
 public:
     sjtu::vector<int> storage_of_tree_tag_; // store unused tag of tree;
     sjtu::vector<int> storage_of_block_tag_; // store unused tag of storage;
-
 public:
     // 最小数据单元
     struct Node {
@@ -80,18 +78,18 @@ public:
 
 public:
     // M叉树结点
-    struct BPTreeNode {
+    struct MultiBPTreeNode {
         int tag = -1;  // 记录序号
         int size = 0;
         bool ifLeaf = true;
         Node key[121]; // 关键词
         int son[121];
 
-        BPTreeNode() {
+        MultiBPTreeNode() {
             memset(son, -1, sizeof(int) * 121);
         }
 
-        BPTreeNode(int tag_, int size_, bool ifLeaf_) {
+        MultiBPTreeNode(int tag_, int size_, bool ifLeaf_) {
             memset(son, -1, sizeof(int) * 121);
             tag = tag_;
             size = size_;
@@ -121,7 +119,7 @@ public:
     // 缓存当前树链
     struct cache {
         int size = 0;
-        BPTreeNode link[100];
+        MultiBPTreeNode link[100];
         int order[100]; //记录分支序号
 
         cache() {
@@ -129,7 +127,7 @@ public:
         }
     } ca;
 
-    BPTreeNode *root = &ca.link[0];
+    MultiBPTreeNode *root = &ca.link[0];
     int head_tag = -1; // 记录第一个数据块
 
     int total_T = 0;
@@ -142,14 +140,14 @@ public:
     std::fstream storage_of_inf_;
     std::string filename_of_inf_;
 
-    void readTree(BPTreeNode &read_, const int &location) {
-        storage_of_tree_.seekg(sizeof(BPTreeNode) * location);
-        storage_of_tree_.read(reinterpret_cast<char *>(&read_), sizeof(BPTreeNode));
+    void readTree(MultiBPTreeNode &read_, const int &location) {
+        storage_of_tree_.seekg(sizeof(MultiBPTreeNode) * location);
+        storage_of_tree_.read(reinterpret_cast<char *>(&read_), sizeof(MultiBPTreeNode));
     }
 
-    void writeTree(BPTreeNode &write_, const int &location) {
-        storage_of_tree_.seekp(sizeof(BPTreeNode) * location);
-        storage_of_tree_.write(reinterpret_cast<char *>(&write_), sizeof(BPTreeNode));
+    void writeTree(MultiBPTreeNode &write_, const int &location) {
+        storage_of_tree_.seekp(sizeof(MultiBPTreeNode) * location);
+        storage_of_tree_.write(reinterpret_cast<char *>(&write_), sizeof(MultiBPTreeNode));
     }
 
     void readRecord(Record &read_, const int &location) {
@@ -162,9 +160,9 @@ public:
         storage_of_record_.write(reinterpret_cast<char *>(&write_), sizeof(Record));
     }
 
-    BPT() = default;
+    MultiBPT() = default;
 
-    BPT(const std::string &fileName1, const std::string &fileName2, const std::string &fileName3) {
+    MultiBPT(const std::string &fileName1, const std::string &fileName2, const std::string &fileName3) {
         filename_of_tree_ = fileName1;
         filename_of_record_ = fileName2;
         filename_of_inf_ = fileName3;
@@ -189,16 +187,16 @@ public:
             storage_of_inf_.seekg(0);
             storage_of_inf_.read(reinterpret_cast <char *> (&total_T), sizeof(total_T));
             storage_of_inf_.read(reinterpret_cast <char *> (&total_R), sizeof(total_R));
-            storage_of_inf_.read(reinterpret_cast <char *> (&ca.link[0]), sizeof(BPTreeNode));
+            storage_of_inf_.read(reinterpret_cast <char *> (&ca.link[0]), sizeof(MultiBPTreeNode));
             ca.size = 1;
         }
     }
 
-    ~BPT() {
+    ~MultiBPT() {
         storage_of_inf_.seekp(0);
         storage_of_inf_.write(reinterpret_cast <const char *> (&total_T), sizeof(int));
         storage_of_inf_.write(reinterpret_cast <const char *> (&total_R), sizeof(int));
-        storage_of_inf_.write(reinterpret_cast <const char *> (&ca.link[0]), sizeof(BPTreeNode));
+        storage_of_inf_.write(reinterpret_cast <const char *> (&ca.link[0]), sizeof(MultiBPTreeNode));
         writeTree(*root, root->tag);
         storage_of_tree_tag_.clear();
         storage_of_block_tag_.clear();
@@ -237,7 +235,7 @@ private:
 
     Record tmp_R;
 
-    int FindTreeLocate(const Node &node_, BPTreeNode *Bnode_) {
+    int FindTreeLocate(const Node &node_, MultiBPTreeNode *Bnode_) {
         Node *tmp = sjtu::lower_bound(Bnode_->key, Bnode_->key + Bnode_->size - 1, node_);
         if (*tmp == node_) return tmp - Bnode_->key + 1;
         else return tmp - Bnode_->key;
@@ -264,7 +262,7 @@ private:
         }
     }
 
-    bool insert_leaf(const Node &node_, BPTreeNode *t) { // 插入m叉树的叶节点
+    bool insert_leaf(const Node &node_, MultiBPTreeNode *t) { // 插入m叉树的叶节点
         int location = FindTreeLocate(node_, t);
         if (insert_R(node_, t->son[location])) { // 数据块分裂
             Record tmp_R2;
@@ -298,7 +296,7 @@ private:
         return false;
     }
 
-    bool insert(const Node &node, BPTreeNode *t) {
+    bool insert(const Node &node, MultiBPTreeNode *t) {
         if (t->ifLeaf) {
             return insert_leaf(node, t);
         } else {
@@ -310,7 +308,7 @@ private:
                 memset(ca.order + ca.size, -1, sizeof(int) * 90);
             }
             if (insert(node, &ca.link[ca.size - 1])) { // 节点分裂
-                BPTreeNode tmp;
+                MultiBPTreeNode tmp;
                 tmp.tag = AssignTreeTag();
                 tmp.size = kHalfBranch;
                 tmp.ifLeaf = ca.link[ca.size - 1].ifLeaf;
@@ -369,7 +367,7 @@ public:
             return;
         } else {
             if (insert(node_, root)) { // 分裂根
-                BPTreeNode tmp_;
+                MultiBPTreeNode tmp_;
                 tmp_.tag = AssignTreeTag();
                 tmp_.size = kHalfBranch;
                 tmp_.ifLeaf = root->ifLeaf;
@@ -388,7 +386,7 @@ public:
                 writeTree(tmp_, tmp_.tag);
                 writeTree(ca.link[0], root->tag);
 
-                BPTreeNode newRoot;
+                MultiBPTreeNode newRoot;
                 newRoot.tag = AssignTreeTag();
                 newRoot.size = 2;
                 newRoot.son[0] = root->tag;
@@ -419,7 +417,7 @@ private:
         }
     }
 
-    bool erase_leaf(const Node &node_, BPTreeNode *t) {  // 从m叉树节点处删除
+    bool erase_leaf(const Node &node_, MultiBPTreeNode *t) {  // 从m叉树节点处删除
         int location = FindTreeLocate(node_, t);
         if (erase_R(node_, t->son[location])) {
             if (location != t->size - 1) {
@@ -507,7 +505,7 @@ private:
         return false;
     }
 
-    bool erase(const Node &node, BPTreeNode *t) {
+    bool erase(const Node &node, MultiBPTreeNode *t) {
         if (t->ifLeaf) {
             return erase_leaf(node, t);
         } else {
@@ -518,11 +516,11 @@ private:
                 readTree(ca.link[ca.size - 1], t->son[location]);
                 memset(ca.order + ca.size, -1, sizeof(int) * 90);
             }
-            BPTreeNode *tmp_T = &ca.link[ca.size - 1];
+            MultiBPTreeNode *tmp_T = &ca.link[ca.size - 1];
             if (erase(node, tmp_T)) {
                 Node n_tmp;
                 if (location != t->size - 1) {
-                    BPTreeNode tmp_T2;
+                    MultiBPTreeNode tmp_T2;
                     readTree(tmp_T2, t->son[location + 1]);
                     if (tmp_T2.size > kBindBranch) { // 向右边借结点
                         tmp_T->key[kBindBranch - 2] = t->key[location];
@@ -551,7 +549,7 @@ private:
                         tmp_T->son[2 * kBindBranch - 2] = tmp_T2.son[kBindBranch - 1];
                         tmp_T->size = 2 * kBindBranch - 1;
                         RestoreTreeTag(tmp_T2.tag);
-                        BPTreeNode tmp;
+                        MultiBPTreeNode tmp;
                         writeTree(*tmp_T, tmp_T->tag);
                         writeTree(tmp, tmp_T2.tag);
 
@@ -569,7 +567,7 @@ private:
                         } else return true;
                     }
                 } else { // 向左边借结点
-                    BPTreeNode tmp_T2;
+                    MultiBPTreeNode tmp_T2;
                     readTree(tmp_T2, t->son[location - 1]);
                     if (tmp_T2.size > kBindBranch) {
                         tmp_T->son[kBindBranch - 1] = tmp_T->son[kBindBranch - 2];
@@ -598,7 +596,7 @@ private:
                         tmp_T2.son[2 * kBindBranch - 2] = tmp_T->son[kBindBranch - 2];
                         tmp_T2.size = 2 * kBindBranch - 1;
                         RestoreTreeTag(tmp_T->tag);
-                        BPTreeNode tmp;
+                        MultiBPTreeNode tmp;
                         writeTree(tmp_T2, tmp_T2.tag);
                         writeTree(tmp, tmp_T->tag);
 
@@ -636,7 +634,7 @@ public:
                 Record tmp;
                 writeRecord(tmp, tmp_R.tag);
                 RestoreTreeTag(root->tag);
-                BPTreeNode tmp_;
+                MultiBPTreeNode tmp_;
                 ca.link[0] = tmp_;
             } else {
                 Node node;
@@ -664,10 +662,10 @@ public:
     }
 
 
-    int find(const index_type &index_) {
+    void find(const index_type &index_,sjtu::vector<value_type> &indexes) {
         Node tmp(index_, -1);
         if (!root->size) {
-            return -1;
+            return;
         }
         int point;
         ca.size = 1;
@@ -685,56 +683,53 @@ public:
             if (location == tmp_R.size && strcmp(index_, tmp_R.Block[location].index) != 0) {
                 point = tmp_R.next;
                 if (point == -1) {
-                    return -1;
+                    return ;
                 }
                 readRecord(tmp_R, point);
                 location = 0;
             }
-//            bool flag = true;
+            bool flag = true;
             if (strcmp(index_, tmp_R.Block[location].index) != 0) {
-                return -1;
+                return ;
             } else {
-                return tmp_R.Block[location].value;
-//                while (location < tmp_R.size) {
-//                    ++location;
-//                    if (location == tmp_R.size) break;
-//                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-//                        std::cout << tmp_R.Block[location].value << ' ';
-//                    } else {
-//                        flag = false;
-//                        break;
-//                    }
-//                }
-//                while (flag and point != -1) {
-//                    point = tmp_R.next;
-//                    if (point != -1) {
-//                        readRecord(tmp_R, point);
-//                        location = -1;
-//                        while (location < tmp_R.size) {
-//                            ++location;
-//                            if (location == tmp_R.size) break;
-//                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-//                                std::cout << tmp_R.Block[location].value << ' ';
-//                            } else {
-//                                flag = false;
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
+                indexes.push_back(tmp_R.Block[location].value);
+                while (location < tmp_R.size) {
+                    ++location;
+                    if (location == tmp_R.size) break;
+                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+                        indexes.push_back(tmp_R.Block[location].value);
+                    } else {
+                        flag = false;
+                        break;
+                    }
+                }
+                while (flag and point != -1) {
+                    point = tmp_R.next;
+                    if (point != -1) {
+                        readRecord(tmp_R, point);
+                        location = -1;
+                        while (location < tmp_R.size) {
+                            ++location;
+                            if (location == tmp_R.size) break;
+                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+                                indexes.push_back( tmp_R.Block[location].value);
+                            } else {
+                                flag = false;
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-//            std::cout << '\n';
-//            return;
-//
+            return;
         }
-        return -1;
     }
 
     void clear(){
         storage_of_tree_tag_.clear();
         storage_of_block_tag_.clear();
         ca.size=0;
-        BPTreeNode tmp_;
+        MultiBPTreeNode tmp_;
         ca.link[0] = tmp_;
         head_tag = -1; // 记录第一个数据块
 
@@ -742,5 +737,4 @@ public:
         total_R = 0;
     }
 };
-
-#endif //TICKETSYSTEM_SRC_BPT_H
+#endif //TICKETSYSTEM_SRC_MULTI_OBJECT_MultiBPT_H
