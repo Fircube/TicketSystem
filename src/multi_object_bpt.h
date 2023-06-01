@@ -11,46 +11,32 @@
 #include "function.h"
 
 
-const int kBranch = 120; // M叉树
-const int kHalfBranch = 60;
-const int kBindBranch = 40;
-const int kBlockSize = 320; // 数据块大小
-const int kHalfBlockSize = 160;
-const int kBindBlockSize = 106;
 
-template<typename index_type, typename value_type>
+
+template<typename index_type, typename value_type,class CmpI = std::less<index_type>, class CmpV = std::less<value_type>>
 class MultiBPT {
 public:
+    const int kBranch = 120; // M叉树
+    const int kHalfBranch = 60;
+    const int kBindBranch = 40;
+    static const int kBlockSize = 320; // 数据块大小
+    const int kHalfBlockSize = 160;
+    const int kBindBlockSize = 106;
     sjtu::vector<int> storage_of_tree_tag_; // store unused tag of tree;
     sjtu::vector<int> storage_of_block_tag_; // store unused tag of storage;
 public:
     // 最小数据单元
     struct Node {
         index_type index;
-        value_type value = -1;
+        value_type value=-1;
 
-        Node() {
-            memset(index, 0, sizeof(index));
-        };
+        Node() {};
 
-        Node(const index_type &index_, const value_type &value_) {
-            memset(index, 0, sizeof(index));
-            strcpy(index, index_);
-            value = value_;
-        }
-
-        Node &operator=(const Node &rhs) {
-            memset(index, 0, sizeof(index));
-            strcpy(index, rhs.index);
-            value = rhs.value;
-            return *this;
-        }
+        Node(const index_type &index_, const value_type &value_) : index(index_), value(value_) {}
 
         bool operator<(const Node &rhs) const {
-            if (strcmp(index, rhs.index) != 0) {
-                if (strcmp(index, rhs.index) < 0) return true;
-                return false;
-            } else return value < rhs.value;
+            if (index != rhs.index) return index < rhs.index;
+            else return value < rhs.value;
         }
 
         bool operator>(const Node &rhs) const {
@@ -66,9 +52,7 @@ public:
         }
 
         bool operator==(const Node &rhs) const {
-            if (strcmp(index, rhs.index) != 0)return false;
-            if (value != rhs.value)return false;
-            return true;
+            return index == rhs.index && value == rhs.value;
         }
 
         bool operator!=(const Node &rhs) const {
@@ -662,7 +646,7 @@ public:
     }
 
 
-    void find(const index_type &index_,sjtu::vector<value_type> &indexes) {
+    void find(const index_type &index_,sjtu::vector<value_type> &indexes,sjtu::vector<index_type> &record) {
         Node tmp(index_, -1);
         if (!root->size) {
             return;
@@ -680,7 +664,7 @@ public:
         ca.size = 1;
         if (point != -1) {
             int location = FindRecordLocate(tmp, point);
-            if (location == tmp_R.size && strcmp(index_, tmp_R.Block[location].index) != 0) {
+            if (location == tmp_R.size && index_!= tmp_R.Block[location].index) {
                 point = tmp_R.next;
                 if (point == -1) {
                     return ;
@@ -689,15 +673,17 @@ public:
                 location = 0;
             }
             bool flag = true;
-            if (strcmp(index_, tmp_R.Block[location].index) != 0) {
+            if (index_!= tmp_R.Block[location].index) {
                 return ;
             } else {
                 indexes.push_back(tmp_R.Block[location].value);
+                record.push_back(tmp_R.Block[location].index);
                 while (location < tmp_R.size) {
                     ++location;
                     if (location == tmp_R.size) break;
-                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+                    if (index_== tmp_R.Block[location].index) {
                         indexes.push_back(tmp_R.Block[location].value);
+                        record.push_back(tmp_R.Block[location].index);
                     } else {
                         flag = false;
                         break;
@@ -711,8 +697,9 @@ public:
                         while (location < tmp_R.size) {
                             ++location;
                             if (location == tmp_R.size) break;
-                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
+                            if (index_== tmp_R.Block[location].index) {
                                 indexes.push_back( tmp_R.Block[location].value);
+                                record.push_back(tmp_R.Block[location].index);
                             } else {
                                 flag = false;
                                 break;

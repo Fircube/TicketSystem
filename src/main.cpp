@@ -7,11 +7,11 @@
 #include "token_scanner.h"
 
 int main() {
-    freopen("../Ticket-System-master/testcases/data/basic_2/1.in","r",stdin);
-    freopen("my.ans","w",stdout);
+//    freopen("../Ticket-System-master/testcases/data/basic_2/1.in","r",stdin);
+//    freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;
-//    TrainSystem trainSystem;
+    TrainSystem trainSystem;
     while (getline(std::cin, token)) {
         try {
             std::string order;
@@ -27,7 +27,7 @@ int main() {
             } else if (order == "clean") {
                 if (!scanner.hasMore_) {
                     userSystem.clean();
-//                    trainSystem.clean();
+                    trainSystem.clean();
                     std::cout << "0\n";
                 } else throw std::string("Invalid\n");
             } else if (order == "add_user") {
@@ -40,11 +40,10 @@ int main() {
                 scanner.QueryProfile(userSystem);
             } else if (order == "modify_profile") {
                 scanner.ModifyProfile(userSystem);
+            } else if (order == "add_train") {
+                scanner.AddTrain(trainSystem);
             }
-//            else if (order == "buy") {
-//                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                scanner.buy(accountSystem, bookSystem, logSystem);
-//            } else if (order == "select") {
+//            else if (order == "select") {
 //                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
 //                scanner.select(accountSystem, bookSystem, logSystem);
 //            } else if (order == "modify") {

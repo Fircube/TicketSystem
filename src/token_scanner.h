@@ -80,7 +80,7 @@ public:
             tmp = nextToken();
         }
         if (user_system.amount) {
-            std::cout << user_system.AddUser(cur_user, new_user, new_inf)<<'\n';
+            std::cout << user_system.AddUser(cur_user, new_user, new_inf) << '\n';
         } else {
             new_inf.privilege_ = 10;
             std::cout << user_system.AddFirstUser(new_user, new_inf) << '\n';
@@ -140,7 +140,7 @@ public:
     void ModifyProfile(UserSystem &user_system) {
         std::string tmp = nextToken();
         bool if_modify[4];
-        memset(if_modify,false,sizeof(bool)*4);
+        memset(if_modify, false, sizeof(bool) * 4);
         User m_inf;
         char cur_user[21], m_user[21];
         memset(cur_user, 0, sizeof(cur_user));
@@ -175,19 +175,20 @@ public:
         User pre_inf;
         if (user_system.ModifyProfile(cur_user, m_user, m_inf.privilege_, pre_inf)) {
             if (if_modify[0]) {
-                strcpy(pre_inf.password_,m_inf.password_);
+                strcpy(pre_inf.password_, m_inf.password_);
             }
-            if(if_modify[1]){
-                strcpy(pre_inf.name_,m_inf.name_);
+            if (if_modify[1]) {
+                strcpy(pre_inf.name_, m_inf.name_);
             }
-            if(if_modify[2]){
-                strcpy(pre_inf.mail_addr_,m_inf.mail_addr_);
+            if (if_modify[2]) {
+                strcpy(pre_inf.mail_addr_, m_inf.mail_addr_);
             }
-            if(if_modify[3]){
-                pre_inf.privilege_=m_inf.privilege_;
+            if (if_modify[3]) {
+                pre_inf.privilege_ = m_inf.privilege_;
             }
             user_system.writeFile(pre_inf, pre_inf.tag_);
-            std::cout << pre_inf.username_ << ' ' << pre_inf.name_ << ' ' << pre_inf.mail_addr_ << ' ' << pre_inf.privilege_ << '\n';
+            std::cout << pre_inf.username_ << ' ' << pre_inf.name_ << ' ' << pre_inf.mail_addr_ << ' '
+                      << pre_inf.privilege_ << '\n';
         } else {
             std::cout << "-1\n";
         }
@@ -197,6 +198,87 @@ public:
      * TrainSystem
      */
 
+    void AddTrain(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+//        char cur_user[21], new_user[21];
+//        memset(cur_user, 0, sizeof(cur_user));
+//        memset(new_user, 0, sizeof(new_user));
+        sjtu::vector<int> travel_times;
+        sjtu::vector<int> stopover_times;
+
+        Train new_inf;
+        while (!tmp.empty()) {
+            if (tmp == "-i") {
+                tmp = nextToken();
+                strcpy(new_inf.trainID_, tmp.c_str());
+            } else if (tmp == "-n") {
+                tmp = nextToken();
+                new_inf.station_num_ = atoi(tmp.c_str());
+            } else if (tmp == "-m") {
+                tmp = nextToken();
+                new_inf.seat_num_ = atoi(tmp.c_str());
+            } else if (tmp == "-s") {
+                int i = 0;
+                tmp = nextToken();
+                TokenScanner scanner_key(tmp);
+                std::string key = scanner_key.nextKey();
+                while (!key.empty()) {
+                    strcpy(new_inf.stations_[i], key.c_str());
+                    key = scanner_key.nextKey();
+                    ++i;
+                }
+            } else if (tmp == "-p") {
+                int i = 0;
+                tmp = nextToken();
+                TokenScanner scanner_key(tmp);
+                std::string key = scanner_key.nextKey();
+                while (!key.empty()) {
+                    new_inf.prices_[i] = atoi(key.c_str());
+                    key = scanner_key.nextKey();
+                    ++i;
+                }
+            } else if (tmp == "-x") {
+                tmp = nextToken();
+                new_inf.leave_time_[0] = tmp;
+            } else if (tmp == "-t") {
+                tmp = nextToken();
+                TokenScanner scanner_key(tmp);
+                std::string key = scanner_key.nextKey();
+                while (!key.empty()) {
+                    travel_times.push_back(atoi(key.c_str()));
+                    key = scanner_key.nextKey();
+                }
+            } else if (tmp == "-o") {
+                tmp = nextToken();
+                if(tmp=="-") continue;
+                TokenScanner scanner_key(tmp);
+                std::string key = scanner_key.nextKey();
+                while (!key.empty()) {
+                    stopover_times.push_back(atoi(key.c_str()));
+                    key = scanner_key.nextKey();
+                }
+            } else if (tmp == "-d") {
+                tmp = nextToken();
+                TokenScanner scanner_key(tmp);
+                std::string key = scanner_key.nextKey();
+                new_inf.start_date_=key;
+                key = scanner_key.nextKey();
+                new_inf.end_date_=key;
+            } else if (tmp == "-y") {
+                tmp = nextToken();
+                new_inf.type_ = tmp[0];
+            }
+            tmp = nextToken();
+        }
+        if(train_system.train_map_.find(new_inf.trainID_)!=-1) std::cout<<"-1\n";
+        else{
+            int stop=new_inf.station_num_-1;
+            for(int i=0;i<stop;++i){
+                new_inf.arrive_time_[i]=new_inf.leave_time_[i]+travel_times[i];
+                new_inf.leave_time_[i+1]=new_inf.arrive_time_[i]+stopover_times[i];
+            }
+        }
+    }
 //    void show(UserSystem &user_system, TrainSystem &train_system) {
 //        std::string tmp = nextToken();
 //        if (tmp.empty()) {

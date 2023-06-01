@@ -9,6 +9,7 @@
 #include<fstream>
 #include "bpt.h"
 #include "map.h"
+#include "String.h"
 
 class User {
 public:
@@ -71,7 +72,7 @@ public:
 
 class UserSystem {
 public:
-    BPT<char[21]> user_map_;
+    BPT<sjtu::String<21>,int> user_map_;
 //    sjtu::map<char[21], int> user_login_;
     sjtu::map<std::string, int> user_login_;
     std::fstream user_inf_;

@@ -31,7 +31,6 @@ namespace sjtu {
                 day_ = 1;
                 return *this;
             }
-
         }
 
         friend bool operator==(const Date &a, const Date &b) {
@@ -41,6 +40,19 @@ namespace sjtu {
         friend bool operator<(const Date &a, const Date &b) {
             if (a.month_ != b.month_) return a.month_ < b.month_;
             else return a.day_ < b.day_;
+        }
+
+        friend bool operator>(const Date &a, const Date &b) {
+            if (a.month_ != b.month_) return a.month_ > b.month_;
+            else return a.day_ > b.day_;
+        }
+
+        friend bool operator<=(const Date &a, const Date &b) {
+            return !(a>b);
+        }
+
+        friend bool operator>=(const Date &a, const Date &b) {
+            return !(a<b);
         }
 
         friend std::ostream &operator<<(std::ostream &os, Date &d) {
@@ -77,6 +89,11 @@ namespace sjtu {
         Time(const std::string &s) {
             hour_ = (short) ((s[0] - '0') * 10 + s[1] - '0');
             minute_ = (short) ((s[3] - '0') * 10 + s[4] - '0');
+        }
+
+        Time operator+(const int &t){
+            minute_+=t%60;
+            hour_+=t/60;
         }
 
         friend std::ostream &operator<<(std::ostream &os, Time &t) {
