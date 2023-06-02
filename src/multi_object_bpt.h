@@ -644,9 +644,70 @@ public:
             ca.size = 1;
         }
     }
+    void find(const index_type &index_,sjtu::vector<value_type> &indexes) {
+        Node tmp(index_, -1);
+        if (!root->size) {
+            return;
+        }
+        int point;
+        ca.size = 1;
+        while (!ca.link[ca.size - 1].ifLeaf) {
+            point = FindTreeLocate(tmp, &ca.link[ca.size - 1]);
+            ++ca.size;
+            ca.order[ca.size - 1] = point;
+            readTree(ca.link[ca.size - 1], ca.link[ca.size - 2].son[point]);
+        }
+        point = FindTreeLocate(tmp, &ca.link[ca.size - 1]);
+        point = ca.link[ca.size - 1].son[point];
+        ca.size = 1;
+        if (point != -1) {
+            int location = FindRecordLocate(tmp, point);
+            if (location == tmp_R.size && index_!= tmp_R.Block[location].index) {
+                point = tmp_R.next;
+                if (point == -1) {
+                    return ;
+                }
+                readRecord(tmp_R, point);
+                location = 0;
+            }
+            bool flag = true;
+            if (index_!= tmp_R.Block[location].index) {
+                return ;
+            } else {
+                indexes.push_back(tmp_R.Block[location].value);
+                while (location < tmp_R.size) {
+                    ++location;
+                    if (location == tmp_R.size) break;
+                    if (index_== tmp_R.Block[location].index) {
+                        indexes.push_back(tmp_R.Block[location].value);
+                    } else {
+                        flag = false;
+                        break;
+                    }
+                }
+                while (flag and point != -1) {
+                    point = tmp_R.next;
+                    if (point != -1) {
+                        readRecord(tmp_R, point);
+                        location = -1;
+                        while (location < tmp_R.size) {
+                            ++location;
+                            if (location == tmp_R.size) break;
+                            if (index_== tmp_R.Block[location].index) {
+                                indexes.push_back( tmp_R.Block[location].value);
+                            } else {
+                                flag = false;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            return;
+        }
+    }
 
-
-    void find(const index_type &index_,sjtu::vector<value_type> &indexes,sjtu::vector<index_type> &record) {
+    void find_o(const index_type &index_,sjtu::vector<value_type> &indexes,sjtu::vector<index_type> &record) {
         Node tmp(index_, -1);
         if (!root->size) {
             return;
@@ -711,6 +772,7 @@ public:
             return;
         }
     }
+
 
     void clear(){
         storage_of_tree_tag_.clear();

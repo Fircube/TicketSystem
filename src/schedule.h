@@ -17,6 +17,34 @@ namespace sjtu {
             day_ = (short) ((s[3] - '0') * 10 + s[4] - '0');
         }
 
+        Date &operator+=(const short day) {
+            day_ += day;
+            while (day_ > 30) {
+                if(month_==6){
+                    month_=7;
+                    day_-=30;
+                }else if(day_>31){
+                    month_=8;
+                    day_-=31;
+                }
+            }
+            return *this;
+        }
+
+        Date &operator-=(const short day) {
+            day_ -= day;
+            while (day_ < 0) {
+                if(month_==7){
+                    month_=6;
+                    day_-=30;
+                }else{
+                    month_=7;
+                    day_-=31;
+                }
+            }
+            return *this;
+        }
+
         Date &operator++() {
             ++day_;
             if (day_ < 31) return *this;
@@ -48,34 +76,17 @@ namespace sjtu {
         }
 
         friend bool operator<=(const Date &a, const Date &b) {
-            return !(a>b);
+            return !(a > b);
         }
 
         friend bool operator>=(const Date &a, const Date &b) {
-            return !(a<b);
+            return !(a < b);
         }
 
         friend std::ostream &operator<<(std::ostream &os, Date &d) {
             os << d.month_ / 10 << d.month_ % 10 << '-' << d.day_ / 10 << d.day_ % 10;
             return os;
         }
-//    Date &operator+=(const short day){
-//        day_+=day;
-//        if(day_<31) return *this;
-//        else if(day_==31){
-//            if(month_==6){
-//                ++month_;
-//                day_-=30;
-//            }
-//            return *this;
-//        }else{
-//            while(day_>30){
-//                ++month_;
-//                day_-=30;
-//            }
-//            return *this;
-//        }
-//    }
 
     };
 
@@ -91,9 +102,17 @@ namespace sjtu {
             minute_ = (short) ((s[3] - '0') * 10 + s[4] - '0');
         }
 
-        Time operator+(const int &t){
-            minute_+=t%60;
-            hour_+=t/60;
+        Time operator+(const int &t) {
+            Time time(*this);
+            time.minute_ += t % 60;
+            time.hour_ += t / 60 + time.minute_ / 60;
+            time.minute_ %= 60;
+            return time;
+        }
+
+        int operator-(const Time &t) const {
+            int ans=minute_-t.minute_+60*(hour_-t.hour_);
+            return ans;
         }
 
         friend std::ostream &operator<<(std::ostream &os, Time &t) {

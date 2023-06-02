@@ -4,8 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include "train_system.h"
-#include "user_system.h"
+#include "order_system.h"
 
 class TokenScanner {
 public:
@@ -200,9 +199,6 @@ public:
 
     void AddTrain(TrainSystem &train_system) {
         std::string tmp = nextToken();
-//        char cur_user[21], new_user[21];
-//        memset(cur_user, 0, sizeof(cur_user));
-//        memset(new_user, 0, sizeof(new_user));
         sjtu::vector<int> travel_times;
         sjtu::vector<int> stopover_times;
 
@@ -228,12 +224,14 @@ public:
                     ++i;
                 }
             } else if (tmp == "-p") {
-                int i = 0;
+                int i = 1;
                 tmp = nextToken();
                 TokenScanner scanner_key(tmp);
                 std::string key = scanner_key.nextKey();
+                new_inf.prices_[0] = atoi(key.c_str());
+                key = scanner_key.nextKey();
                 while (!key.empty()) {
-                    new_inf.prices_[i] = atoi(key.c_str());
+                    new_inf.prices_[i] = atoi(key.c_str()) + new_inf.prices_[i - 1];
                     key = scanner_key.nextKey();
                     ++i;
                 }
@@ -250,7 +248,7 @@ public:
                 }
             } else if (tmp == "-o") {
                 tmp = nextToken();
-                if(tmp=="-") continue;
+                if (tmp == "_") continue;
                 TokenScanner scanner_key(tmp);
                 std::string key = scanner_key.nextKey();
                 while (!key.empty()) {
@@ -261,274 +259,196 @@ public:
                 tmp = nextToken();
                 TokenScanner scanner_key(tmp);
                 std::string key = scanner_key.nextKey();
-                new_inf.start_date_=key;
+                new_inf.start_date_ = key;
                 key = scanner_key.nextKey();
-                new_inf.end_date_=key;
+                new_inf.end_date_ = key;
             } else if (tmp == "-y") {
                 tmp = nextToken();
                 new_inf.type_ = tmp[0];
             }
             tmp = nextToken();
         }
-        if(train_system.train_map_.find(new_inf.trainID_)!=-1) std::cout<<"-1\n";
-        else{
-            int stop=new_inf.station_num_-1;
-            for(int i=0;i<stop;++i){
-                new_inf.arrive_time_[i]=new_inf.leave_time_[i]+travel_times[i];
-                new_inf.leave_time_[i+1]=new_inf.arrive_time_[i]+stopover_times[i];
+        if (train_system.train_map_.find(new_inf.trainID_) != -1) std::cout << "-1\n";
+        else {
+            int stop = new_inf.station_num_ - 2;
+            for (int i = 0; i < stop; ++i) {
+                new_inf.arrive_time_[i] = new_inf.leave_time_[i] + travel_times[i];
+                new_inf.leave_time_[i + 1] = new_inf.arrive_time_[i] + stopover_times[i];
             }
+            new_inf.arrive_time_[stop] = new_inf.leave_time_[stop] + travel_times[stop];
+
+            train_system.AddTrain(new_inf);
         }
     }
-//    void show(UserSystem &user_system, TrainSystem &train_system) {
-//        std::string tmp = nextToken();
-//        if (tmp.empty()) {
-//            train_system.show(user_system);
-//            log_.AddLog2(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 6, " ");
-//            return;
-//        }
-//        if (tmp.length() < 6) throw std::string("Invalid\n");
-//
-//        if (tmp[1] == 'I') {
-//            char ISBN_[21];
-//            memset(ISBN_, 0, sizeof(ISBN_));
-//            strcpy(ISBN_, check_assign_ISBN(tmp).c_str());
-//
-//            if (hasMore_) throw std::string("Invalid\n");
-//
-//            train_system.ISBN_show(ISBN_, user_system);
-//        } else {
-//            char type[61];
-//            memset(type, 0, sizeof(type));
-//            strcpy(type, check_assign(tmp).c_str());
-//
-//            if (hasMore_) throw std::string("Invalid\n");
-//
-//            if (tmp[1] == 'n') {
-//                train_system.BookName_show(type, user_system);
-//            } else if (tmp[1] == 'a') {
-//                train_system.Author_show(type, user_system);
-//            } else if (tmp[1] == 'k') {
-//                train_system.Keyword_show(type, user_system);
-//            } else throw std::string("Invalid\n");
-//        }
-//
-//        log_.AddLog2(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 6, tmp.c_str());
-//    }
-//
-//    void buy(UserSystem &user_system, TrainSystem &train_system) {
-//        std::string tmp = nextToken();
-//        check_Type4(tmp);
-//        char ISBN_[21];
-//        memset(ISBN_, 0, sizeof(ISBN_));
-//        strcpy(ISBN_, tmp.c_str());
-//
-//        tmp = nextToken();
-//        int Quantity_ = check_Type6(tmp);
-//        double cost = 0.0;
-//
-//        train_system.buy(ISBN_, Quantity_, user_system, cost);
-//
-//        log_.AddFinance(true, cost);
-//
-//        log_.AddLog3(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 7, ISBN_, Quantity_,
-//                     cost);
-//    }
-//
-//    void select(UserSystem &user_system, TrainSystem &train_system) {
-//        if (user_system.login_stack.top().Privilege < '3') throw std::string("Invalid\n");
-//
-//        std::string tmp = nextToken();
-//        check_Type4(tmp);
-//        char ISBN_[21];
-//        memset(ISBN_, 0, sizeof(ISBN_));
-//        strcpy(ISBN_, tmp.c_str());
-//
-//        train_system.select(ISBN_, user_system);
-//
-//        log_.AddLog4(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 8, ISBN_);
-//    }
-//
-//    void modify(UserSystem &user_system, TrainSystem &train_system) {
-//        if (user_system.login_stack.top().Privilege < '3') throw std::string("Invalid\n");
-//        int index_ = user_system.User_select.top();
-//        if (index_ == -1) throw std::string("Invalid\n");
-//        if (!hasMore_) throw std::string("Invalid\n");
-//
-//        std::string tmp = nextToken();
-//        bool used[5];
-//        char ISBN_[21];
-//        char BookName_[61];
-//        char Author_[61];
-//        char Keyword_[61];
-//        double Price_ = 0.0;
-//        std::string Price;
-//        std::string Key;
-//        std::unordered_map<std::string, bool> hasKey; // 是否修改过
-//        std::vector<std::string> Key_store; // 先存起来，保证没错误再改变
-//
-//        memset(used, false, sizeof(used));
-//        hasKey.clear();
-//        Key_store.clear();
-//        while (!tmp.empty()) {
-//            if (tmp.length() < 6) throw std::string("Invalid\n");
-//            if (tmp[1] == 'I') {
-//                if (used[0]) throw std::string("Invalid\n");
-//
-//                memset(ISBN_, 0, sizeof(ISBN_));
-//                strcpy(ISBN_, check_assign_ISBN(tmp).c_str());
-//                int index = train_system.ISBN_map.search(ISBN_);
-//                if (index != -1) throw std::string("Invalid\n");
-//
-//                used[0] = true;
-//            } else if (tmp[1] == 'k') {
-//                if (used[3]) throw std::string("Invalid\n");
-//
-//                memset(Keyword_, 0, sizeof(Keyword_));
-//                if (tmp.length() < 11) throw std::string("Invalid\n");
-//                std::string temp = tmp.substr(1, 9);
-//                if (temp != "keyword=\"" || tmp[tmp.size() - 1] != '\"') throw std::string("Invalid\n");
-//                temp = tmp.substr(10, tmp.length() - 11);
-//                check_key(temp);
-//                strcpy(Keyword_, temp.c_str());
-//                Key = temp;
-//
-//                // 拆分keyword
-//                TokenScanner scanner_key(temp);
-//                std::string key = scanner_key.nextKey();
-//                while (!key.empty()) {
-//                    if (hasKey.count(key)) throw std::string("Invalid\n");
-//                    hasKey[key] = true;
-//                    Key_store.push_back(key);
-//                    key = scanner_key.nextKey();
-//                }
-//
-//                used[3] = true;
-//            } else {
-//                char type[61];
-//                memset(type, 0, sizeof(type));
-//                strcpy(type, check_assign(tmp).c_str());
-//
-//                if (tmp[1] == 'n') {
-//                    if (used[1]) throw std::string("Invalid\n");
-//                    used[1] = true;
-//                    memset(BookName_, 0, sizeof(BookName_));
-//                    strcpy(BookName_, type);
-//                } else if (tmp[1] == 'a') {
-//                    if (used[2]) throw std::string("Invalid\n");
-//                    used[2] = true;
-//                    memset(Author_, 0, sizeof(Author_));
-//                    strcpy(Author_, type);
-//                } else if (tmp[1] == 'p') {
-//                    if (used[4]) throw std::string("Invalid\n");
-//                    used[4] = true;
-//                    Price = type;
-//                    Price_ = atof(type);
-//                } else throw std::string("Invalid\n");
-//            }
-//            tmp = nextToken();
-//        }
-//
-//        // 检验没有语法问题后统一进行变换
-//        Book tmpBook;
-//        train_system.readFile(tmpBook, index_);
-//
-//        if (used[0]) {
-//            std::string order = ISBN_;
-//            order = "change ISBN to " + order;
-//            log_.AddLog5(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 9, tmpBook.ISBN,
-//                         order);
-//            train_system.ISBN_modify(ISBN_, user_system);
-//        }
-//        if (used[1]) {
-//            train_system.BookName_modify(BookName_, user_system);
-//            std::string order = BookName_;
-//            order = "change BookName to " + order;
-//            log_.AddLog5(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 9, tmpBook.ISBN,
-//                         order);
-//        }
-//        if (used[2]) {
-//            train_system.Author_modify(Author_, user_system);
-//            std::string order = Author_;
-//            order = "change Author " + order;
-//            log_.AddLog5(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 9, tmpBook.ISBN,
-//                         order);
-//        }
-//        if (used[4]) {
-//            train_system.Price_modify(Price_, user_system);
-//            std::string order = "change BookName to " + Price;
-//            log_.AddLog5(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 9, tmpBook.ISBN,
-//                         order);
-//        }
-//        if (used[3]) {
-//            Book tmp_;
-//            train_system.Book_inf.seekg(sizeof(Book) * index_ + sizeof(int));
-//            train_system.Book_inf.read(reinterpret_cast<char *>(&tmp_), sizeof(Book));
-//
-//            // 删除原来的key
-//            char empty[61];
-//            memset(empty, 0, sizeof(empty));
-//            if (strcmp(empty, tmp_.Keyword) != 0) {
-//                TokenScanner scanner_key_(tmp_.Keyword);
-//                std::string key_ = scanner_key_.nextKey();
-//                while (!key_.empty()) {
-//                    char key_c[61];
-//                    strcpy(key_c, key_.c_str());
-//                    train_system.Keyword_map.erase(key_c, tmp_.ISBN, tmp_.tag);
-//                    key_ = scanner_key_.nextKey();
-//                }
-//            }
-//
-//            strcpy(tmp_.Keyword, Keyword_);
-//            train_system.Book_inf.seekp(sizeof(Book) * index_ + sizeof(int));
-//            train_system.Book_inf.write(reinterpret_cast<char *>(&tmp_), sizeof(Book));
-//
-//            // 一个个插入新key
-//            for (auto &iter: Key_store) {
-//                char key_c[61];
-//                strcpy(key_c, iter.c_str());
-//                train_system.Keyword_map.insert(key_c, tmp_.ISBN, tmp_.tag);
-//            }
-//            std::string order = "change Keyword to " + Key;
-//            log_.AddLog5(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 9, tmpBook.ISBN,
-//                         order);
-//        }
-//    }
-//
-//    void import(UserSystem &user_system, TrainSystem &train_system) {
-//        if (user_system.login_stack.top().Privilege < '3') throw std::string("Invalid\n");
-//
-//        int index_ = user_system.User_select.top();
-//        if (index_ == -1) throw std::string("Invalid\n");
-//
-//        std::string tmp = nextToken();
-//        int Quantity_ = check_Type6(tmp);
-//
-//        tmp = nextToken();
-//        check_Type7(tmp);
-//        double TotalCost_ = atof(tmp.c_str());
-//
-//        train_system.import(Quantity_, TotalCost_, user_system);
-//
-//        log_.AddFinance(false, TotalCost_);
-//
-//        Book tmpBook;
-//        train_system.readFile(tmpBook, index_);
-//        log_.AddLog3(user_system.login_stack.top().Privilege, user_system.login_stack.top().UserID, 7, tmpBook.ISBN,
-//                     Quantity_,
-//                     TotalCost_);
-//    }
-//
-//    void show_finance(UserSystem &user_system) {
-//        if (user_system.login_stack.top().Privilege < '7') throw std::string("Invalid\n");
-//        std::string tmp = nextToken();
-//        if (tmp.empty()) {
-//            log_.ShowFinance(-1);
-//            return;
-//        }
-//        int Quantity_ = check_Type6(tmp);
-//        log_.ShowFinance(Quantity_);
-//    }
 
+    void DeleteTrain(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+        char trainID[21];
+        memset(trainID, 0, sizeof(trainID));
+        while (!tmp.empty()) {
+            if (tmp == "-i") {
+                tmp = nextToken();
+                strcpy(trainID, tmp.c_str());
+            }
+            tmp = nextToken();
+        }
+        std::cout << train_system.DeleteTrain(trainID) << '\n';
+    }
+
+    void ReleaseTrain(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+        char trainID[21];
+        memset(trainID, 0, sizeof(trainID));
+
+        tmp = nextToken();
+        strcpy(trainID, tmp.c_str());
+
+        std::cout << train_system.ReleaseTrain(trainID) << '\n';
+    }
+
+    void QueryTrain(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+        char trainID[21];
+        sjtu::Date date;
+        memset(trainID, 0, sizeof(trainID));
+        while (!tmp.empty()) {
+            if (tmp == "-i") {
+                tmp = nextToken();
+                strcpy(trainID, tmp.c_str());
+            } else if (tmp == "-d") {
+                tmp = nextToken();
+                date = tmp;
+            }
+            tmp = nextToken();
+        }
+        train_system.QueryTrain(trainID, date);
+    }
+
+    void QueryTicket(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+        char start[31], target[31];
+        sjtu::Date date;
+        memset(start, 0, sizeof(start));
+        memset(target, 0, sizeof(target));
+        bool p = false;
+        while (!tmp.empty()) {
+            if (tmp == "-s") {
+                tmp = nextToken();
+                strcpy(start, tmp.c_str());
+            } else if (tmp == "-t") {
+                tmp = nextToken();
+                strcpy(target, tmp.c_str());
+            } else if (tmp == "-d") {
+                tmp = nextToken();
+                date = tmp;
+            } else if (tmp == "-p") {
+                tmp = nextToken();
+                if (tmp == "time") p = false;
+                else p = true;
+            }
+            tmp = nextToken();
+        }
+        train_system.QueryTicket(start, target, date, p);
+    }
+
+    void QueryTransfer(TrainSystem &train_system) {
+        std::string tmp = nextToken();
+        char start[31], target[31];
+        sjtu::Date date;
+        memset(start, 0, sizeof(start));
+        memset(target, 0, sizeof(target));
+        bool p;
+        while (!tmp.empty()) {
+            if (tmp == "-s") {
+                tmp = nextToken();
+                strcpy(start, tmp.c_str());
+            } else if (tmp == "-t") {
+                tmp = nextToken();
+                strcpy(target, tmp.c_str());
+            } else if (tmp == "-d") {
+                tmp = nextToken();
+                date = tmp;
+            } else if (tmp == "-p") {
+                tmp = nextToken();
+                if (tmp == "time") p = false;
+                else p = true;
+            }
+            tmp = nextToken();
+        }
+        train_system.QueryTransfer(start, target, date, p);
+    }
+
+    /*
+     * OrderSystem
+     */
+
+    void BuyTicket(UserSystem &user_system, TrainSystem &train_system, OrderSystem &order_system) {
+        std::string tmp = nextToken();
+        char username[21], trainID[21];
+        char from[31], to[31];
+        sjtu::Date date;
+        int num;
+        bool if_queue;
+        memset(username, 0, sizeof(username));
+        memset(trainID, 0, sizeof(trainID));
+        memset(from, 0, sizeof(from));
+        memset(to, 0, sizeof(to));
+        while (!tmp.empty()) {
+            if (tmp == "-u") {
+                tmp = nextToken();
+                strcpy(username, tmp.c_str());
+            } else if (tmp == "-i") {
+                tmp = nextToken();
+                strcpy(trainID, tmp.c_str());
+            } else if (tmp == "-d") {
+                tmp = nextToken();
+                date = tmp;
+            } else if (tmp == "-n") {
+                tmp = nextToken();
+                num = atoi(tmp.c_str());
+            } else if (tmp == "-f") {
+                tmp = nextToken();
+                strcpy(from, tmp.c_str());
+            } else if (tmp == "-t") {
+                tmp = nextToken();
+                strcpy(to, tmp.c_str());
+            } else if (tmp == "-q") {
+                tmp = nextToken();
+                if (tmp == "true") if_queue = true;
+                else if_queue = false;
+            }
+            tmp = nextToken();
+        }
+        order_system.BuyTicket(username, trainID, from, to, date, num, if_queue, user_system, train_system);
+    }
+
+    void QueryOrder(UserSystem &user_system, TrainSystem &train_system, OrderSystem &order_system) {
+        std::string tmp = nextToken();
+        tmp = nextToken();
+        char username[21];
+        memset(username, 0, sizeof(username));
+        strcpy(username, tmp.c_str());
+
+        order_system.QueryOrder(username, user_system, train_system);
+    }
+
+    void RefundTicket(UserSystem &user_system, TrainSystem &train_system, OrderSystem &order_system) {
+        std::string tmp = nextToken();
+        char username[21];
+        memset(username, 0, sizeof(username));
+        int order = 1;
+        while (!tmp.empty()) {
+            if (tmp == "-u") {
+                tmp = nextToken();
+                strcpy(username, tmp.c_str());
+            } else if (tmp == "-n") {
+                tmp = nextToken();
+                order = atoi(tmp.c_str());
+            }
+            tmp = nextToken();
+        }
+        order_system.RefundTicket(username, order, user_system, train_system);
+    }
 };
 
 #endif //TICKETSYSTEM_SRC_TokenScanner_H

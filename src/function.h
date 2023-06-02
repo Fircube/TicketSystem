@@ -31,6 +31,47 @@ namespace sjtu {
     }
 
     template<class T>
+    void merge(int l, int mid, int r, T *re) {
+        T *tmp = new T[r - l + 10];
+        int ll = l, rr = mid + 1;
+        int order = 0;
+        while (ll <= mid && rr <= r) {
+            if (re[ll] < re[rr]) {
+                tmp[order] = re[ll];
+                ++ll;
+                ++order;
+            } else {
+                tmp[order] = re[rr];
+                ++rr;
+                ++order;
+            }
+        }
+        while (ll <= mid) {
+            tmp[order] = re[ll];
+            ++ll;
+            ++order;
+        }
+        while (rr <= r) {
+            tmp[order] = re[rr];
+            ++rr;
+            ++order;
+        }
+        for (int i = 0; i < order; ++i) {
+            re[l + i] = tmp[i];
+        }
+        delete[]tmp;
+    }
+
+    template<class T>
+    void mergesort(int l, int r,  T *re) {
+        if (l == r) return;
+        int mid = (l + r) >> 1;
+        mergesort(l, mid, re);
+        mergesort(mid + 1, r, re);
+        merge(l, mid, r, re);
+    }
+
+    template<class T>
     T *lower_bound(T *first, T *last, const T &value) {
         // TODO
         if (*(last - 1) < value) return last;

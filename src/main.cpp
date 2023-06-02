@@ -7,11 +7,12 @@
 #include "token_scanner.h"
 
 int main() {
-//    freopen("../Ticket-System-master/testcases/data/basic_2/1.in","r",stdin);
-//    freopen("my.ans","w",stdout);
+    freopen("../Ticket-System-master/testcases/data/basic_2/1.in","r",stdin);
+    freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;
     TrainSystem trainSystem;
+    OrderSystem orderSystem;
     while (getline(std::cin, token)) {
         try {
             std::string order;
@@ -42,34 +43,23 @@ int main() {
                 scanner.ModifyProfile(userSystem);
             } else if (order == "add_train") {
                 scanner.AddTrain(trainSystem);
+            } else if (order == "delete_train") {
+                scanner.DeleteTrain(trainSystem);
+            } else if (order == "release_train") {
+                scanner.ReleaseTrain(trainSystem);
+            } else if (order == "query_train") {
+                scanner.QueryTrain(trainSystem);
+            } else if (order == "query_ticket") {
+                scanner.QueryTicket(trainSystem);
+            } else if (order == "query_transfer") {
+                scanner.QueryTransfer(trainSystem);
+            } else if (order == "buy_ticket") {
+                scanner.BuyTicket(userSystem,trainSystem,orderSystem);
+            }else if (order == "query_order") {
+                scanner.QueryOrder(userSystem,trainSystem,orderSystem);
+            }else if (order == "refund_ticket") {
+                scanner.RefundTicket(userSystem,trainSystem,orderSystem);
             }
-//            else if (order == "select") {
-//                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                scanner.select(accountSystem, bookSystem, logSystem);
-//            } else if (order == "modify") {
-//                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                scanner.modify(accountSystem, bookSystem, logSystem);
-//            } else if (order == "import") {
-//                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                scanner.import(accountSystem, bookSystem, logSystem);
-//            } else if (order == "log") {
-//                if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                logSystem.showLog();
-//            } else if (order == "show") {
-//                int point_ = scanner.point;
-//                order = scanner.nextToken();
-//                if (order == "finance") { // show finance
-//                    if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                    scanner.show_finance(accountSystem, logSystem);
-//                } else { // show in bookSystem
-//                    scanner.point = point_;
-//                    scanner.hasMore_ = true;
-//                    if (accountSystem.login_stack.empty()) throw std::string("Invalid\n");
-//                    scanner.show(accountSystem, bookSystem, logSystem);
-//                }
-//            } else {
-//                throw std::string("Invalid\n");
-//            }
         }
         catch (std::string error_out) {
             std::cout << error_out;
