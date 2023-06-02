@@ -74,6 +74,7 @@ private:
             return !(*this == rhs);
         }
     };
+
 public:
     struct SeatIndex {
 
@@ -115,7 +116,7 @@ public:
     };
 
     struct Seat {
-        int tag_;
+        int tag_ = -1;
         int seat_[99];
 
         Seat() {
@@ -136,7 +137,9 @@ public:
     sjtu::vector<int> storage_of_train_tag_; // store unused tag;
 //    sjtu::vector<int> storage_of_seat_tag_; // store unused tag;
 
-    TrainSystem() : train_map_("trainID_tree", "trainID_record", "train_tag") {
+    TrainSystem() : train_map_("trainID_tree", "trainID_record", "train_tag"),
+                    seat_map_("seat_tree", "seat_record", "seat_tag"),
+                    station_map_("station_tree", "station_record", "station_tag") {
         train_inf_.open(filename1_);
         if (!train_inf_.good()) { // 是否成功打开
             train_inf_.open(filename1_, std::fstream::out); // 新建
@@ -256,9 +259,9 @@ public:
         for (int i = 0; i < tmp.station_num_ - 1; ++i) seat.seat_[i] = tmp.seat_num_;
         for (; seat_index.date_ <= tmp.end_date_; ++seat_index.date_) {
             int tag_s = AssignSeatTag();
-            seat.tag_=tag_s;
+            seat.tag_ = tag_s;
             seat_map_.insert(seat_index, tag_s);
-            writeSeatFile(seat,tag_s);
+            writeSeatFile(seat, tag_s);
         }
         return 0;
     }
@@ -367,9 +370,10 @@ public:
             query_data.seat_num_ = train.seat_num_;
             query_data.prices_ = train.prices_[target_o[i]] - train.prices_[start_o[i]];
             query_data.leave_date_ = date;
+            leave_time.hour_%=24;
             query_data.leave_time_ = leave_time;
             query_data.arrive_date_ = departure_date;
-            query_data.arrive_time_ = train.arrive_time_[start_o[i] - 1];
+            query_data.arrive_time_ = train.arrive_time_[target_o[i] - 1];
             query_data.arrive_time_.update(query_data.arrive_date_, query_data.arrive_time_);
             query_data.time_ = query_data.arrive_time_ - query_data.leave_time_;
             SeatIndex index;
@@ -378,13 +382,17 @@ public:
             int tag = seat_map_.find(index);
             Seat seat;
             readSeatFile(seat, tag);
-            for (int j = start_o[i]; j < target_o[i]; j++) {
+            for (int j = start_o[i]; j < target_o[i]; j++)
                 query_data.seat_num_ = std::min(query_data.seat_num_, seat.seat_[j]);
-            }
+
             record.push_back(query_data);
         }
 
         size = record.size();
+        if(!size){
+            std::cout<<"0\n";
+            return ;
+        }
         int *sort_tag = new int[size];
         for (int i = 0; i < size; i++) sort_tag[i] = i;
 
@@ -425,9 +433,13 @@ public:
     }
 
 
-
     void clean() {
-
+        train_map_.clear();
+        seat_map_.clear();
+        station_map_.clear();
+        amount_train_ = 0;
+        amount_seat_ = 0;
+        storage_of_train_tag_.clear();
     }
 
 private:
@@ -435,7 +447,7 @@ private:
                     sjtu::vector<int> &s_o, sjtu::vector<int> &t_o) {
         sjtu::vector<int> start_tag, tar_tag;
         sjtu::vector<StationIndex> start_inf, tar_inf;
-        StationIndex s(start, 0);
+        StationIndex s(start, -1);
         station_map_.find_o(s, start_tag, start_inf);
         if (start_tag.empty()) return;
         StationIndex t(target, 0);
@@ -444,24 +456,24 @@ private:
         int start_size = start_tag.size(), tar_size = tar_tag.size();
         int i = 0, j = 0;
         while (i < start_size && j < tar_size) {
-            while (i != start_size && start_tag[i] < tar_tag[i]) ++i;
+            while (i != start_size && start_tag[i] < tar_tag[j]) ++i;
             if (i == start_size) return;
-            if (start_tag[i] == tar_tag[i]) {
-                if (start_inf[i].order_ < tar_inf[i].order_) {
+            if (start_tag[i] == tar_tag[j]) {
+                if (start_inf[i].order_ < tar_inf[j].order_) {
                     satisfied_train.push_back(start_tag[i]);
                     s_o.push_back(start_inf[i].order_);
-                    t_o.push_back(tar_inf[i].order_);
+                    t_o.push_back(tar_inf[j].order_);
                 }
                 ++i;
             }
             ++j;
-            while (j != tar_size && tar_tag[i] < start_tag[i]) ++j;
+            while (j != tar_size && tar_tag[j] < start_tag[i]) ++j;
             if (j == tar_size) return;
-            if (start_tag[i] == tar_tag[i]) {
-                if (start_inf[i].order_ < tar_inf[i].order_) {
+            if (start_tag[i] == tar_tag[j]) {
+                if (start_inf[i].order_ < tar_inf[j].order_) {
                     satisfied_train.push_back(start_tag[i]);
                     s_o.push_back(start_inf[i].order_);
-                    t_o.push_back(tar_inf[i].order_);
+                    t_o.push_back(tar_inf[j].order_);
                 }
                 ++j;
             }

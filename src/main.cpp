@@ -7,14 +7,16 @@
 #include "token_scanner.h"
 
 int main() {
-    freopen("../Ticket-System-master/testcases/data/basic_2/1.in","r",stdin);
+    freopen("../Ticket-System-master/testcases/data/basic_3/2.in","r",stdin);
     freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;
     TrainSystem trainSystem;
     OrderSystem orderSystem;
+    int i=0;
     while (getline(std::cin, token)) {
         try {
+            ++i;
             std::string order;
             TokenScanner scanner(token);
             std::cout << scanner.nextToken() << ' ';
@@ -23,12 +25,13 @@ int main() {
             } else if (order == "exit") {
                 if (!scanner.hasMore_) {
                     std::cout << "bye\n";
-                    exit(0);
+                    break;
                 } else throw std::string("Invalid\n");
             } else if (order == "clean") {
                 if (!scanner.hasMore_) {
                     userSystem.clean();
                     trainSystem.clean();
+                    orderSystem.clean();
                     std::cout << "0\n";
                 } else throw std::string("Invalid\n");
             } else if (order == "add_user") {

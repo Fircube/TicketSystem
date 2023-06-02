@@ -33,13 +33,13 @@ namespace sjtu {
 
         Date &operator-=(const short day) {
             day_ -= day;
-            while (day_ < 0) {
+            while (day_ <= 0) {
                 if(month_==7){
                     month_=6;
-                    day_-=30;
+                    day_+=30;
                 }else{
                     month_=7;
-                    day_-=31;
+                    day_+=31;
                 }
             }
             return *this;

@@ -224,11 +224,12 @@ public:
                     ++i;
                 }
             } else if (tmp == "-p") {
-                int i = 1;
+                int i = 2;
                 tmp = nextToken();
                 TokenScanner scanner_key(tmp);
                 std::string key = scanner_key.nextKey();
-                new_inf.prices_[0] = atoi(key.c_str());
+                new_inf.prices_[0] = 0;
+                new_inf.prices_[1] = atoi(key.c_str());
                 key = scanner_key.nextKey();
                 while (!key.empty()) {
                     new_inf.prices_[i] = atoi(key.c_str()) + new_inf.prices_[i - 1];
@@ -388,7 +389,7 @@ public:
         char from[31], to[31];
         sjtu::Date date;
         int num;
-        bool if_queue;
+        bool if_queue=false;
         memset(username, 0, sizeof(username));
         memset(trainID, 0, sizeof(trainID));
         memset(from, 0, sizeof(from));

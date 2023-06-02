@@ -45,7 +45,8 @@ public:
     std::fstream order_inf_;
     std::string filename_ = "order_inf";
 
-    OrderSystem() : order_map_("order_tree", "order_record", "order_tag") {
+    OrderSystem() : order_map_("order_tree", "order_record", "order_tag"),
+                    order_queue_("queue_tree", "queue_record", "queue_tag") {
         order_inf_.open(filename_);
         if (!order_inf_.good()) { // 是否成功打开
             order_inf_.open(filename_, std::fstream::out); // 新建
@@ -71,7 +72,7 @@ public:
 
     void writeFile(Order &write, const int &location) {
         order_inf_.seekp(sizeof(Order) * location + sizeof(amount_));
-        order_inf_.write(reinterpret_cast<char *>(&write), sizeof(Train));
+        order_inf_.write(reinterpret_cast<char *>(&write), sizeof(Order));
     }
 
     void BuyTicket(const char(&username)[21], const char(&trainID)[21], const char(&from)[31], const char (&to)[31],
@@ -108,14 +109,17 @@ public:
         int day = train.leave_time_[from_o].hour_ / 24;
         sjtu::Date departure_date = date;
         departure_date -= day;
-        TrainSystem::SeatIndex seat_index(departure_date, trainID); ////
+        if (departure_date < train.start_date_ || train.end_date_ < departure_date) {
+            std::cout << "-1\n";
+            return;
+        }
+        TrainSystem::SeatIndex seat_index(departure_date, trainID);
         int seat_tag = trainSystem.seat_map_.find(seat_index);
         TrainSystem::Seat seat;
         trainSystem.readSeatFile(seat, seat_tag);
 
-        int empty_seat = 0x3f;
-        for (int i = from_o; i < to_o; i++)
-            empty_seat = std::min(empty_seat, seat.seat_[i]);
+        int empty_seat = 0x7fffffff;
+        for (int i = from_o; i < to_o; i++) empty_seat = std::min(empty_seat, seat.seat_[i]);
         if (empty_seat < num && !if_queue || num > train.seat_num_) {
             std::cout << "-1\n";
             return;
@@ -135,15 +139,14 @@ public:
 
         if (empty_seat >= num) {
             order.status_ = 0;
-            order_map_.insert(trainID, order.tag_);
+            order_map_.insert(username, order.tag_);
             writeFile(order, order.tag_);
-            for (int i = from_o; i < to_o; i++)
-                seat.seat_[i] -= num;
+            for (int i = from_o; i < to_o; i++) seat.seat_[i] -= num;
             trainSystem.writeSeatFile(seat, seat.tag_);
             std::cout << (long long) num * order.price_ << '\n';
         } else {
             order.status_ = 1;
-            order_map_.insert(trainID, order.tag_);
+            order_map_.insert(username, order.tag_);
             writeFile(order, order.tag_);
             order_queue_.insert(seat_index, order.tag_);
             std::cout << "queue\n";
@@ -161,7 +164,7 @@ public:
         order_map_.find(username, record);
         int size = record.size();
         std::cout << size << '\n';
-        for (int i = 0; i < size; ++i) {
+        for (int i = size - 1; i >= 0; --i) {
             Order order;
             readFile(order, record[i]);
             if (!order.status_)
@@ -178,7 +181,7 @@ public:
             date = order.departure_date_;
             time = order.arrive_time_;
             time.update(date, time);
-            std::cout << date << ' ' << time << " -> " << order.price_ << ' ' << order.num_;
+            std::cout << date << ' ' << time << ' ' << order.price_ << ' ' << order.num_ << '\n';
         }
     }
 
@@ -191,10 +194,11 @@ public:
 
         sjtu::vector<int> record;
         order_map_.find(username, record);
-        if (num >= record.size()) {
+        if (num > record.size()) {
             std::cout << "-1\n";
+            return;
         }
-        int tag = record[num - 1];
+        int tag = record[record.size() - num];
         Order order;
         readFile(order, tag);
         if (order.status_ == 2) {
@@ -207,11 +211,13 @@ public:
         seat_index.trainID_ = order.trainID_;
         if (order.status_ == 1) {
             order.status_ = 2;
+            writeFile(order, order.tag_);
             order_queue_.erase(seat_index, order.tag_);
             std::cout << "0\n";
             return;
         }
         order.status_ = 2;
+        writeFile(order, order.tag_);
         int seat_tag = trainSystem.seat_map_.find(seat_index);
         TrainSystem::Seat seat;
         trainSystem.readSeatFile(seat, seat_tag);
@@ -221,20 +227,24 @@ public:
         int size = re.size();
         for (int i = 0; i < size; ++i) {
             Order o;
-            readFile(o,re[i]);
-            int empty_seat = 0x3f;
+            readFile(o, re[i]);
+            int empty_seat = 0x7fffffff;
             for (int j = o.from_o_; j < o.to_o_; j++) empty_seat = std::min(empty_seat, seat.seat_[j]);
             if (empty_seat < o.num_) continue;
             o.status_ = 0;
             for (int j = o.from_o_; j < o.to_o_; j++) seat.seat_[j] -= o.num_;
             order_queue_.erase(seat_index, o.tag_);
-            writeFile(o,re[i]);
+            writeFile(o, re[i]);
         }
         trainSystem.writeSeatFile(seat, seat_tag);
         std::cout << "0\n";
     }
 
-
+    void clean() {
+        amount_ = 0;
+        order_map_.clear();
+        order_queue_.clear();
+    }
 };
 
 #endif //TICKETSYSTEM_SRC_ORDER_SYSTEM_H
