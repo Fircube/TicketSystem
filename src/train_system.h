@@ -156,7 +156,7 @@ public:
             seat_inf_.open(filename2_); // 变为可读可写
         } else {
             seat_inf_.seekg(0);
-            train_inf_.read(reinterpret_cast <char *> (&amount_seat_), sizeof(amount_seat_));
+            seat_inf_.read(reinterpret_cast <char *> (&amount_seat_), sizeof(amount_seat_));
 
         }
     }
@@ -330,8 +330,6 @@ public:
 private:
     struct QueryData {
         char trainID_[21];
-//        char start_[31];
-//        char target_[31];
         int seat_num_;
         int prices_;
         int time_;
@@ -342,8 +340,61 @@ private:
 
         QueryData() {
             memset(trainID_, 0, sizeof(trainID_));
-//            memset(start_, 0, sizeof(start_));
-//            memset(target_, 0, sizeof(target_));
+        }
+    };
+
+    struct TransferData {
+        char trainID1_[21];
+        char trainID2_[21];
+        int tag1_;
+        int tag2_;
+        int time_ = 0x7fffffff;
+        int price_ = 0x7fffffff;
+        int start1_;
+        int target1_;
+        int start2_;
+        int target2_;
+        sjtu::Date transfer_date_;
+        sjtu::Time transfer_time_;
+        sjtu::Date departure_date2_;
+
+        TransferData() {
+            memset(trainID1_, 0, sizeof(trainID1_));
+            memset(trainID2_, 0, sizeof(trainID2_));
+        }
+
+        TransferData &operator=(const TransferData &rhs) {
+            if (this == &rhs) return *this;
+            strcpy(trainID1_, rhs.trainID1_);
+            strcpy(trainID2_, rhs.trainID2_);
+            tag1_ = rhs.tag1_;
+            tag2_ = rhs.tag2_;
+            time_ = rhs.time_;
+            price_ = rhs.price_;
+            start1_ = rhs.start1_;
+            target1_ = rhs.target1_;
+            start2_ = rhs.start2_;
+            target2_ = rhs.target2_;
+            transfer_date_ = rhs.transfer_date_;
+            transfer_time_ = rhs.transfer_time_;
+            departure_date2_ = rhs.departure_date2_;
+            return *this;
+        }
+
+        bool time_first(const TransferData &rhs) {
+            if (time_ != rhs.time_) return time_ < rhs.time_;
+            if (price_ != rhs.price_) return price_ < rhs.price_;
+            auto cmp = strcmp(trainID1_, rhs.trainID1_);
+            if (cmp != 0) return cmp < 0;
+            return strcmp(trainID2_, rhs.trainID2_) < 0;
+        }
+
+        bool price_first(const TransferData &rhs) {
+            if (price_ != rhs.price_) return price_ < rhs.price_;
+            if (time_ != rhs.time_) return time_ < rhs.time_;
+            auto cmp = strcmp(trainID1_, rhs.trainID1_);
+            if (cmp != 0) return cmp < 0;
+            return strcmp(trainID2_, rhs.trainID2_) < 0;
         }
     };
 
@@ -359,7 +410,7 @@ public:
         for (int i = 0; i < size; ++i) {
             Train train;
             readTrainFile(train, satisfied_train[i]);
-//            if(start_o[i]==train.station_num_) continue;
+            if (start_o[i] == train.station_num_ - 1) continue;
             sjtu::Time leave_time = train.leave_time_[start_o[i]];
             int day = leave_time.hour_ / 24;
             sjtu::Date departure_date = date;
@@ -369,13 +420,13 @@ public:
             strcpy(query_data.trainID_, train.trainID_);
             query_data.seat_num_ = train.seat_num_;
             query_data.prices_ = train.prices_[target_o[i]] - train.prices_[start_o[i]];
+            query_data.time_ = train.arrive_time_[target_o[i] - 1] - leave_time;
             query_data.leave_date_ = date;
-            leave_time.hour_%=24;
+            leave_time.hour_ %= 24;
             query_data.leave_time_ = leave_time;
             query_data.arrive_date_ = departure_date;
             query_data.arrive_time_ = train.arrive_time_[target_o[i] - 1];
             query_data.arrive_time_.update(query_data.arrive_date_, query_data.arrive_time_);
-            query_data.time_ = query_data.arrive_time_ - query_data.leave_time_;
             SeatIndex index;
             index.date_ = departure_date;
             index.trainID_ = train.trainID_;
@@ -389,9 +440,9 @@ public:
         }
 
         size = record.size();
-        if(!size){
-            std::cout<<"0\n";
-            return ;
+        if (!size) {
+            std::cout << "0\n";
+            return;
         }
         int *sort_tag = new int[size];
         for (int i = 0; i < size; i++) sort_tag[i] = i;
@@ -409,27 +460,58 @@ public:
     }
 
     void QueryTransfer(const char(&start)[31], const char (&target)[31], sjtu::Date date, bool p) {
-        std::cout << "0\n";
-//        sjtu::vector<int> satisfied_train;
-//        sjtu::vector<int> start_o;
-//        sjtu::vector<int> target_o;
-////        FindTransfer(start, target, satisfied_train, start_o, target_o,date);
-//        if (start_o.empty() || target_o.empty()) {
-//            std::cout << "0\n";
-//            return;
-//        }
-//
-//
-//
-//        QueryData s,t;
-//
-//        std::cout << s.trainID_ << ' ' << start << ' ' << s.leave_date_ << ' '
-//                  << s.leave_time_ << " -> " << target << ' ' << s.arrive_date_ << ' '
-//                  << s.arrive_time_ << ' ' << s.prices_ << ' ' << s.seat_num_ << '\n';
-//
-//        std::cout << t.trainID_ << ' ' << start << ' ' << t.leave_date_ << ' '
-//                  << t.leave_time_ << " -> " << target << ' ' << t.arrive_date_ << ' '
-//                  << t.arrive_time_ << ' ' << t.prices_ << ' ' << t.seat_num_ << '\n';
+        TransferData transfer;
+        if (!FindTransfer(start, target, date, p, transfer)) {
+            std::cout << "0\n";
+            return;
+        }
+
+        Train train1, train2;
+        readTrainFile(train1, transfer.tag1_);
+        readTrainFile(train2, transfer.tag2_);
+
+        QueryData s, t;
+        s.seat_num_ = train1.seat_num_;
+        s.prices_ = train1.prices_[transfer.target1_] - train1.prices_[transfer.start1_];
+        s.leave_date_ = date;
+        s.leave_time_ = train1.leave_time_[transfer.start1_];
+        s.leave_time_.hour_ %= 24;
+        s.arrive_date_ = transfer.transfer_date_;
+        s.arrive_time_ = transfer.transfer_time_;
+        SeatIndex index1;
+        sjtu::Date departure_date = date;
+        departure_date -= train1.leave_time_[transfer.start1_].hour_ / 24;
+        index1.date_ = departure_date;
+        index1.trainID_ = transfer.trainID1_;
+        int tag = seat_map_.find(index1);
+        Seat seat;
+        readSeatFile(seat, tag);
+        for (int j = transfer.start1_; j < transfer.target1_; j++)
+            s.seat_num_ = std::min(s.seat_num_, seat.seat_[j]);
+
+        t.seat_num_ = train2.seat_num_;
+        t.prices_ = train2.prices_[transfer.target2_] - train2.prices_[transfer.start2_];
+        t.leave_date_ = transfer.departure_date2_;
+        t.leave_time_ = train2.leave_time_[transfer.start2_];
+        t.leave_time_.update(t.leave_date_, t.leave_time_);
+        t.arrive_date_ = transfer.departure_date2_;
+        t.arrive_time_ = train2.arrive_time_[transfer.target2_ - 1];
+        t.arrive_time_.update(t.arrive_date_, t.arrive_time_);
+        SeatIndex index2;
+        index2.date_ = transfer.departure_date2_;
+        index2.trainID_ = transfer.trainID2_;
+        tag = seat_map_.find(index2);
+        readSeatFile(seat, tag);
+        for (int j = transfer.start2_; j < transfer.target2_; j++)
+            t.seat_num_ = std::min(t.seat_num_, seat.seat_[j]);
+        std::cout << transfer.trainID1_ << ' ' << start << ' ' << s.leave_date_ << ' '
+                  << s.leave_time_ << " -> " << train1.stations_[transfer.target1_] << ' ' << s.arrive_date_ << ' '
+                  << s.arrive_time_ << ' ' << s.prices_ << ' ' << s.seat_num_ << '\n';
+
+        std::cout << transfer.trainID2_ << ' ' << train1.stations_[transfer.target1_] << ' ' << t.leave_date_ << ' '
+                  << t.leave_time_ << " -> " << target << ' ' << t.arrive_date_ << ' '
+                  << t.arrive_time_ << ' ' << t.prices_ << ' ' << t.seat_num_ << '\n';
+
     }
 
 
@@ -447,7 +529,7 @@ private:
                     sjtu::vector<int> &s_o, sjtu::vector<int> &t_o) {
         sjtu::vector<int> start_tag, tar_tag;
         sjtu::vector<StationIndex> start_inf, tar_inf;
-        StationIndex s(start, -1);
+        StationIndex s(start, 0);
         station_map_.find_o(s, start_tag, start_inf);
         if (start_tag.empty()) return;
         StationIndex t(target, 0);
@@ -481,42 +563,149 @@ private:
         }
     }
 
-    void FindTransfer(const char(&start)[31], const char (&target)[31], sjtu::Date &date, bool p) {
+    bool
+    FindTransfer(const char(&start)[31], const char (&target)[31], sjtu::Date &date, bool p, TransferData &transfer) {
         sjtu::vector<int> start_tag, tar_tag;
         sjtu::vector<StationIndex> start_inf, tar_inf;
+
         StationIndex s(start, 0);
         station_map_.find_o(s, start_tag, start_inf);
-        if (start_tag.empty()) return;
+        if (start_tag.empty()) return false;
         StationIndex t(target, 0);
         station_map_.find_o(t, tar_tag, tar_inf);
-        if (tar_tag.empty()) return;
+        if (tar_tag.empty()) return false;
+
         int start_size = start_tag.size(), tar_size = tar_tag.size();
 
-        sjtu::map<sjtu::String<31>, sjtu::vector<sjtu::pair<int, int>>> from_a;
-
+        sjtu::map<sjtu::String<31>, sjtu::vector<TransferData>> destination;
+        bool flag = false;
         for (int i = 0; i < start_size; ++i) {
+            int k = start_inf[i].order_;
+
             Train train;
             readTrainFile(train, start_tag[i]);
-            sjtu::Time leave_time = train.leave_time_[start_inf[i].order_];
-            int day = leave_time.hour_ / 24;
-            sjtu::Date departure_date = date;
-            departure_date -= day;
-            if (departure_date < train.start_date_ || train.end_date_ < departure_date) continue;
+            sjtu::Time leave_time1 = train.leave_time_[k];
+            int day = leave_time1.hour_ / 24;
+            sjtu::Date departure_date1 = date;
+            departure_date1 -= day;
+            if (departure_date1 < train.start_date_ || train.end_date_ < departure_date1) continue;
 
+            for (int j = k + 1; j < train.station_num_; ++j) {
+                if (train.stations_[j] == target) continue;
 
+                flag = true;
+                auto find = destination.find(train.stations_[j]);
+                if (find == destination.end()) {
+                    sjtu::vector<TransferData> v;
+                    TransferData tmp;
+                    strcpy(tmp.trainID1_, train.trainID_);
+                    tmp.tag1_ = start_tag[i];
+                    tmp.transfer_time_ = train.arrive_time_[j - 1];
+                    tmp.transfer_date_ = departure_date1;
+                    tmp.transfer_time_.update(tmp.transfer_date_, tmp.transfer_time_);
+                    tmp.time_ = (train.leave_time_[k].hour_ % 24) * 60 + train.leave_time_[k].minute_;
+                    tmp.price_ = train.prices_[j] - train.prices_[k];
+                    tmp.start1_ = k;
+                    tmp.target1_ = j;
+                    v.push_back(tmp);
+                    destination[train.stations_[j]] = v;
+                } else {
+                    TransferData tmp;
+                    strcpy(tmp.trainID1_, train.trainID_);
+                    tmp.tag1_ = start_tag[i];
+                    tmp.transfer_time_ = train.arrive_time_[j - 1];
+                    tmp.transfer_date_ = departure_date1;
+                    tmp.transfer_time_.update(tmp.transfer_date_, tmp.transfer_time_);
+                    tmp.time_ = (train.leave_time_[k].hour_ % 24) * 60 + train.leave_time_[k].minute_;
+                    tmp.price_ = train.prices_[j] - train.prices_[k];
+                    tmp.start1_ = k;
+                    tmp.target1_ = j;
+                    destination[train.stations_[j]].push_back(tmp);
+                }
+            }
         }
-
+        if (!flag) return false;
+        else flag = false;
         for (int i = 0; i < tar_size; ++i) {
+            int h = tar_inf[i].order_;
+
             Train train;
             readTrainFile(train, tar_tag[i]);
-            sjtu::Time leave_time = train.leave_time_[tar_inf[i].order_];
-            int day = leave_time.hour_ / 24;
-            sjtu::Date departure_date = date;
-            departure_date -= day;
-            if (departure_date < train.start_date_ || train.end_date_ < departure_date) continue;
+            sjtu::Time arrive_time2 = train.arrive_time_[h - 1];
+            int day = arrive_time2.hour_ / 24;
+            sjtu::Date departure_date2 = date;
+            departure_date2 -= day;
+            if (train.end_date_ < departure_date2) continue;
 
+            departure_date2 = train.end_date_;
+            sjtu::Date arrive_date2 = train.end_date_;
+            arrive_time2.update(arrive_date2, arrive_time2);
+            for (int j = h - 1; j >= 0; --j) {
+                if (train.stations_[j] == start) continue;
+                auto find = destination.find(train.stations_[j]);
+                if (find == destination.end()) {
+                    continue;
+                } else {
+                    sjtu::vector<TransferData> &v = destination[train.stations_[j]];
+                    int size = v.size();
 
+                    for (int k = 0; k < size; ++k) {
+                        TransferData &tmp = v[k];
+                        sjtu::Time leave_time2 = train.leave_time_[j];
+                        sjtu::Date leave_date2 = train.end_date_;
+                        leave_time2.update(leave_date2, leave_time2);
+                        if (leave_date2 < tmp.transfer_date_ ||
+                            leave_date2 == tmp.transfer_date_ && leave_time2 < tmp.transfer_time_)
+                            continue;
+
+                        flag = true;
+                        int distance;
+                        if (leave_time2 < tmp.transfer_time_) {
+                            if (tmp.transfer_date_ + 1 < leave_date2) {
+                                distance = leave_date2 - tmp.transfer_date_ - 1;
+                                int d = train.end_date_ - train.start_date_;
+                                distance = distance < d ? distance : d;
+                                leave_date2 -= distance;
+                                departure_date2 -= distance;
+                                arrive_date2 -= distance;
+                            }
+                        } else {
+                            if (tmp.transfer_date_ < leave_date2) {
+                                distance = leave_date2 - tmp.transfer_date_;
+                                int d = train.end_date_ - train.start_date_;
+                                distance = distance < d ? distance : d;
+                                leave_date2 -= distance;
+                                departure_date2 -= distance;
+                                arrive_date2 -= distance;
+                            }
+                        }
+
+                        strcpy(tmp.trainID2_, train.trainID_);
+                        tmp.time_ = (arrive_time2.hour_ % 24) * 60 + arrive_time2.minute_ - tmp.time_;
+                        tmp.time_ += 60 * 24 * (arrive_date2 - date);
+                        tmp.price_ += train.prices_[h] - train.prices_[j];
+                        if (!p) {
+                            if (tmp.time_first(transfer)) {
+                                tmp.tag2_ = tar_tag[i];
+                                tmp.start2_ = j;
+                                tmp.target2_ = h;
+                                tmp.departure_date2_ = departure_date2;
+                                transfer = tmp;
+                            }
+                        } else {
+                            if (tmp.price_first(transfer)) {
+                                tmp.tag2_ = tar_tag[i];
+                                tmp.start2_ = j;
+                                tmp.target2_ = h;
+                                tmp.departure_date2_ = departure_date2;
+                                transfer = tmp;
+                            }
+                        }
+                    }
+                }
+            }
         }
+        return flag;
     }
 
     void merge(int l, int mid, int r, int *tag, sjtu::vector<QueryData> &re, bool p) {
@@ -525,25 +714,51 @@ private:
         int order = 0;
         if (!p) {
             while (ll <= mid && rr <= r) {
-                if (re[tag[ll]].time_ < re[tag[rr]].time_) {
-                    tmp[order] = tag[ll];
-                    ++ll;
-                    ++order;
+                if (re[tag[ll]].time_ != re[tag[rr]].time_) {
+                    if (re[tag[ll]].time_ < re[tag[rr]].time_) {
+                        tmp[order] = tag[ll];
+                        ++ll;
+                        ++order;
+                    } else {
+                        tmp[order] = tag[rr];
+                        ++rr;
+                        ++order;
+                    }
                 } else {
-                    tmp[order] = tag[rr];
-                    ++rr;
-                    ++order;
+                    if (strcmp(re[tag[ll]].trainID_, re[tag[rr]].trainID_) < 0) {
+                        tmp[order] = tag[ll];
+                        ++ll;
+                        ++order;
+                    } else {
+                        tmp[order] = tag[rr];
+                        ++rr;
+                        ++order;
+                    }
                 }
             }
         } else {
-            if (re[tag[ll]].prices_ < re[tag[rr]].prices_) {
-                tmp[order] = tag[ll];
-                ++ll;
-                ++order;
-            } else {
-                tmp[order] = tag[rr];
-                ++rr;
-                ++order;
+            while (ll <= mid && rr <= r) {
+                if (re[tag[ll]].prices_ != re[tag[rr]].prices_) {
+                    if (re[tag[ll]].prices_ < re[tag[rr]].prices_) {
+                        tmp[order] = tag[ll];
+                        ++ll;
+                        ++order;
+                    } else {
+                        tmp[order] = tag[rr];
+                        ++rr;
+                        ++order;
+                    }
+                } else {
+                    if (strcmp(re[tag[ll]].trainID_, re[tag[rr]].trainID_) < 0) {
+                        tmp[order] = tag[ll];
+                        ++ll;
+                        ++order;
+                    } else {
+                        tmp[order] = tag[rr];
+                        ++rr;
+                        ++order;
+                    }
+                }
             }
         }
         while (ll <= mid) {

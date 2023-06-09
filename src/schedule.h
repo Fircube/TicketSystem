@@ -17,6 +17,31 @@ namespace sjtu {
             day_ = (short) ((s[3] - '0') * 10 + s[4] - '0');
         }
 
+        int operator-(const Date &t) const {
+            if(month_==t.month_) return day_-t.day_;
+            else if(month_==8){
+                if(t.month_==7) return 31+day_-t.day_;
+                else return 61+day_-t.day_;
+            }else{
+                return 30+day_-t.day_;
+            }
+        }
+
+        Date operator+(const short day) {
+            Date tmp(*this);
+            tmp.day_ += day;
+            while (tmp.day_ > 30) {
+                if(tmp.month_==6){
+                    tmp.month_=7;
+                    tmp.day_-=30;
+                }else if(day_>31){
+                    tmp.month_=8;
+                    tmp.day_-=31;
+                }
+            }
+            return tmp;
+        }
+
         Date &operator+=(const short day) {
             day_ += day;
             while (day_ > 30) {
@@ -113,6 +138,24 @@ namespace sjtu {
         int operator-(const Time &t) const {
             int ans=minute_-t.minute_+60*(hour_-t.hour_);
             return ans;
+        }
+        
+        friend bool operator<(const Time &a, const Time &b) {
+            if (a.hour_ != b.hour_) return a.hour_ < b.hour_;
+            else return a.minute_ < b.minute_;
+        }
+
+        friend bool operator>(const Time &a, const Time &b) {
+            if (a.hour_ != b.hour_) return a.hour_ > b.hour_;
+            else return a.minute_ > b.minute_;
+        }
+
+        friend bool operator<=(const Time &a, const Time &b) {
+            return !(a > b);
+        }
+
+        friend bool operator>=(const Time &a, const Time &b) {
+            return !(a < b);
         }
 
         friend std::ostream &operator<<(std::ostream &os, Time &t) {
