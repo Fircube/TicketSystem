@@ -549,6 +549,7 @@ private:
                 ++i;
             }
             ++j;
+            if (i == start_size) return;
             while (j != tar_size && tar_tag[j] < start_tag[i]) ++j;
             if (j == tar_size) return;
             if (start_tag[i] == tar_tag[j]) {
@@ -560,6 +561,7 @@ private:
                 ++j;
             }
             ++i;
+            if (j == tar_size) return;
         }
     }
 
@@ -590,33 +592,29 @@ private:
             departure_date1 -= day;
             if (departure_date1 < train.start_date_ || train.end_date_ < departure_date1) continue;
 
+            TransferData tmp;
+            strcpy(tmp.trainID1_, train.trainID_);
+            tmp.tag1_ = start_tag[i];
+            tmp.time_ = (train.leave_time_[k].hour_ % 24) * 60 + train.leave_time_[k].minute_;
             for (int j = k + 1; j < train.station_num_; ++j) {
-                if (train.stations_[j] == target) continue;
+                if (strcmp(train.stations_[j], target) == 0) continue;
 
                 flag = true;
                 auto find = destination.find(train.stations_[j]);
                 if (find == destination.end()) {
                     sjtu::vector<TransferData> v;
-                    TransferData tmp;
-                    strcpy(tmp.trainID1_, train.trainID_);
-                    tmp.tag1_ = start_tag[i];
                     tmp.transfer_time_ = train.arrive_time_[j - 1];
                     tmp.transfer_date_ = departure_date1;
                     tmp.transfer_time_.update(tmp.transfer_date_, tmp.transfer_time_);
-                    tmp.time_ = (train.leave_time_[k].hour_ % 24) * 60 + train.leave_time_[k].minute_;
                     tmp.price_ = train.prices_[j] - train.prices_[k];
                     tmp.start1_ = k;
                     tmp.target1_ = j;
                     v.push_back(tmp);
                     destination[train.stations_[j]] = v;
                 } else {
-                    TransferData tmp;
-                    strcpy(tmp.trainID1_, train.trainID_);
-                    tmp.tag1_ = start_tag[i];
                     tmp.transfer_time_ = train.arrive_time_[j - 1];
                     tmp.transfer_date_ = departure_date1;
                     tmp.transfer_time_.update(tmp.transfer_date_, tmp.transfer_time_);
-                    tmp.time_ = (train.leave_time_[k].hour_ % 24) * 60 + train.leave_time_[k].minute_;
                     tmp.price_ = train.prices_[j] - train.prices_[k];
                     tmp.start1_ = k;
                     tmp.target1_ = j;
@@ -633,15 +631,15 @@ private:
             readTrainFile(train, tar_tag[i]);
             sjtu::Time arrive_time2 = train.arrive_time_[h - 1];
             int day = arrive_time2.hour_ / 24;
-            sjtu::Date departure_date2 = date;
-            departure_date2 -= day;
-            if (train.end_date_ < departure_date2) continue;
+            sjtu::Date departure_date2_k = date;
+            departure_date2_k -= day;
+            if (train.end_date_ < departure_date2_k) continue;
 
-            departure_date2 = train.end_date_;
-            sjtu::Date arrive_date2 = train.end_date_;
-            arrive_time2.update(arrive_date2, arrive_time2);
+            departure_date2_k = train.end_date_;
+            sjtu::Date arrive_date2_k = train.end_date_;
+            arrive_time2.update(arrive_date2_k, arrive_time2);
             for (int j = h - 1; j >= 0; --j) {
-                if (train.stations_[j] == start) continue;
+                if (strcmp(train.stations_[j], start) == 0) continue;
                 auto find = destination.find(train.stations_[j]);
                 if (find == destination.end()) {
                     continue;
@@ -650,7 +648,10 @@ private:
                     int size = v.size();
 
                     for (int k = 0; k < size; ++k) {
-                        TransferData &tmp = v[k];
+                        TransferData tmp = v[k];
+                        if (train.tag_ == tmp.tag1_) continue;
+                        sjtu::Date departure_date2=departure_date2_k;
+                        sjtu::Date arrive_date2=arrive_date2_k;
                         sjtu::Time leave_time2 = train.leave_time_[j];
                         sjtu::Date leave_date2 = train.end_date_;
                         leave_time2.update(leave_date2, leave_time2);

@@ -7,7 +7,7 @@
 #include "token_scanner.h"
 
 int main() {
-//    freopen("../testcases/basic_4/3.in","r",stdin);
+//    freopen("../testcases/pressure_1_easy/1.in","r",stdin);
 //    freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;

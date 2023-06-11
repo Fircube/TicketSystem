@@ -193,6 +193,7 @@ public:
         }
         if (strcmp(cur_user, m_user) == 0) {
             readFile(pre_inf, cur_find->second);
+            if(pre_inf.privilege_<=m_privilege) return false;
         } else {
             int m_tag = user_map_.find(m_user);
             if (m_tag == -1) { // 查询用户不存在
