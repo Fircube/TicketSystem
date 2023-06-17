@@ -18,35 +18,35 @@ namespace sjtu {
         }
 
         int operator-(const Date &t) const {
-            if(month_==t.month_) return day_-t.day_;
-            else if(month_==9){
-                if(t.month_==8) return 31+day_-t.day_;
-                else if(t.month_==7) return 62+day_-t.day_;
-                else return 92+day_-t.day_;
-            }else if(month_==8){
-                if(t.month_==7) return 31+day_-t.day_;
-                else return 61+day_-t.day_;
-            }else{
-                return 30+day_-t.day_;
+            if (month_ == t.month_) return day_ - t.day_;
+            else if (month_ == 9) {
+                if (t.month_ == 8) return 31 + day_ - t.day_;
+                else if (t.month_ == 7) return 62 + day_ - t.day_;
+                else return 92 + day_ - t.day_;
+            } else if (month_ == 8) {
+                if (t.month_ == 7) return 31 + day_ - t.day_;
+                else return 61 + day_ - t.day_;
+            } else {
+                return 30 + day_ - t.day_;
             }
         }
 
         Date operator+(const short day) {
             Date tmp(*this);
             tmp.day_ += day;
-            if(tmp.month_==6){
-                if(tmp.day_>30){
-                    tmp.month_=7;
-                    tmp.day_-=30;
+            if (tmp.month_ == 6) {
+                if (tmp.day_ > 30) {
+                    tmp.month_ = 7;
+                    tmp.day_ -= 30;
                 }
-                while(tmp.day_>31){
+                while (tmp.day_ > 31) {
                     ++tmp.month_;
-                    tmp.day_-=31;
+                    tmp.day_ -= 31;
                 }
-            }else{
-                while(tmp.day_>31){
+            } else {
+                while (tmp.day_ > 31) {
                     ++tmp.month_;
-                    tmp.day_-=31;
+                    tmp.day_ -= 31;
                 }
             }
             return tmp;
@@ -54,19 +54,19 @@ namespace sjtu {
 
         Date &operator+=(const short day) {
             day_ += day;
-            if(month_==6){
-                if(day_>30){
-                    month_=7;
-                    day_-=30;
+            if (month_ == 6) {
+                if (day_ > 30) {
+                    month_ = 7;
+                    day_ -= 30;
                 }
-                while(day_>31){
+                while (day_ > 31) {
                     ++month_;
-                    day_-=31;
+                    day_ -= 31;
                 }
-            }else{
-                while(day_>31){
+            } else {
+                while (day_ > 31) {
                     ++month_;
-                    day_-=31;
+                    day_ -= 31;
                 }
             }
             return *this;
@@ -75,16 +75,16 @@ namespace sjtu {
         Date &operator-=(const short day) {
             day_ -= day;
             while (day_ <= 0) {
-                if(month_==7){
-                    month_=6;
-                    day_+=30;
-                }else if(month_==8){
-                    month_=7;
-                    day_+=31;
-                }else if(month_==9){
-                    month_=8;
-                    day_+=31;
-                }else{
+                if (month_ == 7) {
+                    month_ = 6;
+                    day_ += 30;
+                } else if (month_ == 8) {
+                    month_ = 7;
+                    day_ += 31;
+                } else if (month_ == 9) {
+                    month_ = 8;
+                    day_ += 31;
+                } else {
                     break;
                 }
             }
@@ -157,10 +157,10 @@ namespace sjtu {
         }
 
         int operator-(const Time &t) const {
-            int ans=minute_-t.minute_+60*(hour_-t.hour_);
+            int ans = minute_ - t.minute_ + 60 * (hour_ - t.hour_);
             return ans;
         }
-        
+
         friend bool operator<(const Time &a, const Time &b) {
             if (a.hour_ != b.hour_) return a.hour_ < b.hour_;
             else return a.minute_ < b.minute_;
@@ -190,7 +190,6 @@ namespace sjtu {
                 t.hour_ -= 24;
             }
         }
-
     };
 }
 

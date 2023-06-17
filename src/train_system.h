@@ -1,17 +1,17 @@
 #ifndef TICKETSYSTEM_SRC_TRAINSYSTEM_H
 #define TICKETSYSTEM_SRC_TRAINSYSTEM_H
 
-#include<iostream>
-#include<cmath>
-#include<cstdio>
-#include<cstring>
-#include<string>
-#include<fstream>
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <fstream>
 #include "bpt.h"
 #include "multi_object_bpt.h"
 #include "schedule.h"
 #include "utility.h"
-#include "String.h"
+#include "my_string.h"
 #include "map.h"
 
 
@@ -39,9 +39,9 @@ public:
 
 class TrainSystem {
 private:
-    struct StationIndex {
+    struct StationIndex { // 车站索引
         sjtu::String<31> station_name_;
-        int order_;
+        int order_; // 第n站 0-based
 
         StationIndex() = default;
 
@@ -76,8 +76,7 @@ private:
     };
 
 public:
-    struct SeatIndex {
-
+    struct SeatIndex { // 座位索引
         sjtu::Date date_;
         sjtu::String<21> trainID_;
 
@@ -112,7 +111,6 @@ public:
         bool operator!=(const SeatIndex &rhs) const {
             return !(*this == rhs);
         }
-
     };
 
     struct Seat {
@@ -125,9 +123,9 @@ public:
     };
 
 public:
-    BPT<sjtu::String<21>, int> train_map_;
-    BPT<SeatIndex, int> seat_map_;
-    MultiBPT<StationIndex, int> station_map_;
+    BPT<sjtu::String<21>, int> train_map_; // trainID对应tag
+    BPT<SeatIndex, int> seat_map_; // 记录已release的train某天的seat
+    MultiBPT<StationIndex, int> station_map_; // 车站对应tag
     std::fstream train_inf_;
     std::string filename1_ = "train_inf";
     std::fstream seat_inf_;
@@ -135,7 +133,6 @@ public:
     int amount_train_ = 0;
     int amount_seat_ = 0;
     sjtu::vector<int> storage_of_train_tag_; // store unused tag;
-//    sjtu::vector<int> storage_of_seat_tag_; // store unused tag;
 
     TrainSystem() : train_map_("trainID_tree", "trainID_record", "train_tag"),
                     seat_map_("seat_tree", "seat_record", "seat_tag"),
@@ -170,7 +167,6 @@ public:
         seat_inf_.close();
     }
 
-//private:
     void readTrainFile(Train &read, const int &location) {
         train_inf_.seekg(sizeof(Train) * location + sizeof(amount_train_));
         train_inf_.read(reinterpret_cast<char *>(&read), sizeof(Train));
@@ -206,19 +202,8 @@ public:
     }
 
     int AssignSeatTag() {
-//        if (storage_of_seat_tag_.empty()) {
         return amount_seat_++;
-//        } else {
-//            int tag = storage_of_seat_tag_.back();
-//            storage_of_seat_tag_.pop_back();
-//            return tag;
-//        }
     }
-
-//    void RestoreSeatTag(int tag) {
-//        storage_of_seat_tag_.push_back(tag);
-//    }
-
 
 public:
     void AddTrain(Train &new_inf) {
@@ -235,6 +220,7 @@ public:
         Train tmp;
         readTrainFile(tmp, tag);
         if (tmp.release_) return -1;
+
         train_map_.erase(trainID, tag);
         RestoreTrainTag(tag);
         return 0;
@@ -253,20 +239,19 @@ public:
             StationIndex station_index(tmp.stations_[i], i);
             station_map_.insert(station_index, tag);
         }
-
         SeatIndex seat_index(tmp.start_date_, trainID);
         Seat seat;
         for (int i = 0; i < tmp.station_num_ - 1; ++i) seat.seat_[i] = tmp.seat_num_;
         for (; seat_index.date_ <= tmp.end_date_; ++seat_index.date_) {
             int tag_s = AssignSeatTag();
-            seat.tag_ = tag_s;
             seat_map_.insert(seat_index, tag_s);
+            seat.tag_ = tag_s;
             writeSeatFile(seat, tag_s);
         }
         return 0;
     }
 
-    void QueryTrain(const char(&trainID)[21], sjtu::Date date) { //
+    void QueryTrain(const char(&trainID)[21], sjtu::Date date) {
         int tag = train_map_.find(trainID);
         if (tag == -1) {
             std::cout << "-1\n";
@@ -278,6 +263,7 @@ public:
             std::cout << "-1\n";
             return;
         }
+
         if (tmp.release_) {
             SeatIndex seat_index(date, trainID);
             int tag_s = seat_map_.find(seat_index);
@@ -350,13 +336,13 @@ private:
         int tag2_;
         int time_ = 0x7fffffff;
         int price_ = 0x7fffffff;
-        int start1_;
+        int start1_; // 第一辆车的始末站
         int target1_;
-        int start2_;
+        int start2_; // 第二辆车的始末站
         int target2_;
-        sjtu::Date transfer_date_;
+        sjtu::Date transfer_date_; // 第一辆车的到达日
         sjtu::Time transfer_time_;
-        sjtu::Date departure_date2_;
+        sjtu::Date departure_date2_; // 第二辆车的出发日（第0站）
 
         TransferData() {
             memset(trainID1_, 0, sizeof(trainID1_));
@@ -381,7 +367,7 @@ private:
             return *this;
         }
 
-        bool time_first(const TransferData &rhs) {
+        bool time_first(const TransferData &rhs) { // 时间优先
             if (time_ != rhs.time_) return time_ < rhs.time_;
             if (price_ != rhs.price_) return price_ < rhs.price_;
             auto cmp = strcmp(trainID1_, rhs.trainID1_);
@@ -389,7 +375,7 @@ private:
             return strcmp(trainID2_, rhs.trainID2_) < 0;
         }
 
-        bool price_first(const TransferData &rhs) {
+        bool price_first(const TransferData &rhs) { // 价格优先
             if (price_ != rhs.price_) return price_ < rhs.price_;
             if (time_ != rhs.time_) return time_ < rhs.time_;
             auto cmp = strcmp(trainID1_, rhs.trainID1_);
@@ -401,8 +387,8 @@ private:
 public:
     void QueryTicket(const char(&start)[31], const char (&target)[31], sjtu::Date date, bool p) {
         sjtu::vector<int> satisfied_train;
-        sjtu::vector<int> start_o;
-        sjtu::vector<int> target_o;
+        sjtu::vector<int> start_o; // 出发站
+        sjtu::vector<int> target_o; // 到达站
         FindTicket(start, target, satisfied_train, start_o, target_o);
         int size = satisfied_train.size();
         sjtu::vector<QueryData> record;
@@ -411,7 +397,7 @@ public:
             Train train;
             readTrainFile(train, satisfied_train[i]);
             if (start_o[i] == train.station_num_ - 1) continue;
-            sjtu::Time leave_time = train.leave_time_[start_o[i]];
+            sjtu::Time leave_time = train.leave_time_[start_o[i]]; // 判断时间
             int day = leave_time.hour_ / 24;
             sjtu::Date departure_date = date;
             departure_date -= day;
@@ -529,12 +515,14 @@ private:
                     sjtu::vector<int> &s_o, sjtu::vector<int> &t_o) {
         sjtu::vector<int> start_tag, tar_tag;
         sjtu::vector<StationIndex> start_inf, tar_inf;
+
         StationIndex s(start, 0);
         station_map_.find_o(s, start_tag, start_inf);
-        if (start_tag.empty()) return;
+        if (start_tag.empty()) return; // 无经过start的车
         StationIndex t(target, 0);
-        station_map_.find_o(t, tar_tag, tar_inf);
+        station_map_.find_o(t, tar_tag, tar_inf); // 无经过target的车
         if (tar_tag.empty()) return;
+
         int start_size = start_tag.size(), tar_size = tar_tag.size();
         int i = 0, j = 0;
         while (i < start_size && j < tar_size) {
@@ -578,7 +566,6 @@ private:
         if (tar_tag.empty()) return false;
 
         int start_size = start_tag.size(), tar_size = tar_tag.size();
-
         sjtu::map<sjtu::String<31>, sjtu::vector<TransferData>> destination;
         bool flag = false;
         for (int i = 0; i < start_size; ++i) {
@@ -586,7 +573,7 @@ private:
 
             Train train;
             readTrainFile(train, start_tag[i]);
-            sjtu::Time leave_time1 = train.leave_time_[k];
+            sjtu::Time leave_time1 = train.leave_time_[k]; // 判断日期
             int day = leave_time1.hour_ / 24;
             sjtu::Date departure_date1 = date;
             departure_date1 -= day;
@@ -633,7 +620,7 @@ private:
             int day = arrive_time2.hour_ / 24;
             sjtu::Date departure_date2_k = date;
             departure_date2_k -= day;
-            if (train.end_date_ < departure_date2_k) continue;
+            if (train.end_date_ < departure_date2_k) continue; // 粗略判断
 
             departure_date2_k = train.end_date_;
             sjtu::Date arrive_date2_k = train.end_date_;
@@ -650,8 +637,8 @@ private:
                     for (int k = 0; k < size; ++k) {
                         TransferData tmp = v[k];
                         if (train.tag_ == tmp.tag1_) continue;
-                        sjtu::Date departure_date2=departure_date2_k;
-                        sjtu::Date arrive_date2=arrive_date2_k;
+                        sjtu::Date departure_date2 = departure_date2_k;
+                        sjtu::Date arrive_date2 = arrive_date2_k;
                         sjtu::Time leave_time2 = train.leave_time_[j];
                         sjtu::Date leave_date2 = train.end_date_;
                         leave_time2.update(leave_date2, leave_time2);
@@ -660,7 +647,7 @@ private:
                             continue;
 
                         flag = true;
-                        int distance;
+                        int distance; // 找到符合条件的最早时间
                         if (leave_time2 < tmp.transfer_time_) {
                             if (tmp.transfer_date_ + 1 < leave_date2) {
                                 distance = leave_date2 - tmp.transfer_date_ - 1;

@@ -1,22 +1,14 @@
-#include<iostream>
-#include<cmath>
-#include<cstdio>
-#include<cstring>
-#include<string>
-#include<fstream>
+#include <iostream>
+#include <string>
 #include "token_scanner.h"
 
 int main() {
-//    freopen("../testcases/pressure_1_easy/1.in","r",stdin);
-//    freopen("my.ans","w",stdout);
     std::string token;
     UserSystem userSystem;
     TrainSystem trainSystem;
     OrderSystem orderSystem;
-    int i=0;
     while (getline(std::cin, token)) {
         try {
-            ++i;
             std::string order;
             TokenScanner scanner(token);
             std::cout << scanner.nextToken() << ' ';
@@ -57,16 +49,16 @@ int main() {
             } else if (order == "query_transfer") {
                 scanner.QueryTransfer(trainSystem);
             } else if (order == "buy_ticket") {
-                scanner.BuyTicket(userSystem,trainSystem,orderSystem);
-            }else if (order == "query_order") {
-                scanner.QueryOrder(userSystem,trainSystem,orderSystem);
-            }else if (order == "refund_ticket") {
-                scanner.RefundTicket(userSystem,trainSystem,orderSystem);
+                scanner.BuyTicket(userSystem, trainSystem, orderSystem);
+            } else if (order == "query_order") {
+                scanner.QueryOrder(userSystem, trainSystem, orderSystem);
+            } else if (order == "refund_ticket") {
+                scanner.RefundTicket(userSystem, trainSystem, orderSystem);
             }
         }
         catch (std::string error_out) {
             std::cout << error_out;
         }
     }
-
+    return 0;
 }

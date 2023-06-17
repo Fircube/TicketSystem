@@ -1,7 +1,9 @@
 #ifndef TICKETSYSTEM_SRC_STRING_H
 #define TICKETSYSTEM_SRC_STRING_H
+
 #include <iostream>
-namespace sjtu{
+
+namespace sjtu {
     template<int size>
     struct String {
         char string[size];

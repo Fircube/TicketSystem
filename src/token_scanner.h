@@ -269,7 +269,7 @@ public:
             }
             tmp = nextToken();
         }
-        if (train_system.train_map_.find(new_inf.trainID_) != -1) std::cout << "-1\n";
+        if (train_system.train_map_.find(new_inf.trainID_) != -1) std::cout << "-1\n"; // 已存在
         else {
             int stop = new_inf.station_num_ - 2;
             for (int i = 0; i < stop; ++i) {
@@ -300,10 +300,8 @@ public:
         std::string tmp = nextToken();
         char trainID[21];
         memset(trainID, 0, sizeof(trainID));
-
         tmp = nextToken();
         strcpy(trainID, tmp.c_str());
-
         std::cout << train_system.ReleaseTrain(trainID) << '\n';
     }
 
@@ -389,7 +387,7 @@ public:
         char from[31], to[31];
         sjtu::Date date;
         int num;
-        bool if_queue=false;
+        bool if_queue = false;
         memset(username, 0, sizeof(username));
         memset(trainID, 0, sizeof(trainID));
         memset(from, 0, sizeof(from));

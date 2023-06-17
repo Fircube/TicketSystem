@@ -1,16 +1,16 @@
 #ifndef TICKETSYSTEM_SRC_ORDER_SYSTEM_H
 #define TICKETSYSTEM_SRC_ORDER_SYSTEM_H
 
-#include<iostream>
-#include<cmath>
-#include<cstdio>
-#include<cstring>
-#include<string>
-#include<fstream>
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <fstream>
 #include "user_system.h"
 #include "train_system.h"
 #include "schedule.h"
-#include "String.h"
+#include "my_string.h"
 #include "multi_object_bpt.h"
 
 struct Order {
@@ -24,8 +24,6 @@ public:
     int status_; // 0-success, 1-pending, 3-refunded
     int price_;
     int num_;
-//    sjtu::Date leave_date_;
-//    sjtu::Date arrive_date_;
     sjtu::Time leave_time_;
     sjtu::Time arrive_time_;
     sjtu::Date departure_date_;
@@ -40,7 +38,7 @@ public:
 struct OrderSystem {
 public:
     int amount_ = 0;
-    MultiBPT<sjtu::String<21>, int> order_map_;
+    MultiBPT<sjtu::String<21>, int> order_map_; // username指向tag
     MultiBPT<TrainSystem::SeatIndex, int> order_queue_; // seatIndex 同样也是date加trainID的配置，不用新设结构体了
     std::fstream order_inf_;
     std::string filename_ = "order_inf";
@@ -105,7 +103,6 @@ public:
             return;
         }
 
-
         int day = train.leave_time_[from_o].hour_ / 24;
         sjtu::Date departure_date = date;
         departure_date -= day;
@@ -113,6 +110,7 @@ public:
             std::cout << "-1\n";
             return;
         }
+
         TrainSystem::SeatIndex seat_index(departure_date, trainID);
         int seat_tag = trainSystem.seat_map_.find(seat_index);
         TrainSystem::Seat seat;
@@ -124,6 +122,7 @@ public:
             std::cout << "-1\n";
             return;
         }
+
         Order order;
         order.tag_ = amount_++;
         strcpy(order.trainID_, trainID);

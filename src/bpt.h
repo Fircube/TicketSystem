@@ -11,10 +11,9 @@
 #include "function.h"
 
 
-
 template<typename index_type, typename value_type, class CmpI = std::less<index_type>, class CmpV = std::less<value_type>>
 class BPT {
-public:
+private:
     const int kBranch = 120; // M叉树
     const int kHalfBranch = 60;
     const int kBindBranch = 40;
@@ -24,11 +23,11 @@ public:
     sjtu::vector<int> storage_of_tree_tag_; // store unused tag of tree;
     sjtu::vector<int> storage_of_block_tag_; // store unused tag of storage;
 
-public:
+private:
     // 最小数据单元
     struct Node {
         index_type index;
-        value_type value=-1;
+        value_type value = -1;
 
         Node() {};
 
@@ -60,7 +59,7 @@ public:
         }
     };
 
-public:
+private:
     // M叉树结点
     struct BPTreeNode {
         int tag = -1;  // 记录序号
@@ -82,7 +81,7 @@ public:
 
     };
 
-public:
+private:
     // 数据块
     struct Record {
         int tag = -1; // 记录序号
@@ -99,7 +98,7 @@ public:
         }
     };
 
-public:
+private:
     // 缓存当前树链
     struct cache {
         int size = 0;
@@ -143,7 +142,7 @@ public:
         storage_of_record_.seekp(sizeof(Record) * location);
         storage_of_record_.write(reinterpret_cast<char *>(&write_), sizeof(Record));
     }
-
+public:
     BPT() = default;
 
     BPT(const std::string &fileName1, const std::string &fileName2, const std::string &fileName3) {
@@ -188,6 +187,7 @@ public:
         storage_of_record_.close();
         storage_of_inf_.close();
     }
+
 private:
     int AssignTreeTag() {
         if (storage_of_tree_tag_.empty()) {
@@ -229,6 +229,7 @@ private:
         readRecord(tmp_R, tag_);
         return sjtu::lower_bound(tmp_R.Block, tmp_R.Block + tmp_R.size, node_) - tmp_R.Block;
     }
+
 private:
     bool insert_R(const Node &node_, int tag_) { // 插入数据块
         int location = FindRecordLocate(node_, tag_);
@@ -332,6 +333,7 @@ private:
             }
         }
     }
+
 public:
     void insert(const index_type &index_, value_type value_) {
         Node node_(index_, value_);
@@ -383,6 +385,7 @@ public:
             ca.size = 1;
         }
     }
+
 private:
     bool erase_R(const Node &node_, int tag_) { // 从数据块中删除
         int location = FindRecordLocate(node_, tag_);
@@ -606,6 +609,7 @@ private:
             }
         }
     }
+
 public:
     void erase(const index_type &index_, value_type value_) {
         Node node_(index_, value_);
@@ -664,7 +668,7 @@ public:
         ca.size = 1;
         if (point != -1) {
             int location = FindRecordLocate(tmp, point);
-            if (location == tmp_R.size && index_!=tmp_R.Block[location].index) {
+            if (location == tmp_R.size && index_ != tmp_R.Block[location].index) {
                 point = tmp_R.next;
                 if (point == -1) {
                     return -1;
@@ -672,50 +676,19 @@ public:
                 readRecord(tmp_R, point);
                 location = 0;
             }
-//            bool flag = true;
-            if (index_!=tmp_R.Block[location].index) {
+            if (index_ != tmp_R.Block[location].index) {
                 return -1;
             } else {
                 return tmp_R.Block[location].value;
-//                while (location < tmp_R.size) {
-//                    ++location;
-//                    if (location == tmp_R.size) break;
-//                    if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-//                        std::cout << tmp_R.Block[location].value << ' ';
-//                    } else {
-//                        flag = false;
-//                        break;
-//                    }
-//                }
-//                while (flag and point != -1) {
-//                    point = tmp_R.next;
-//                    if (point != -1) {
-//                        readRecord(tmp_R, point);
-//                        location = -1;
-//                        while (location < tmp_R.size) {
-//                            ++location;
-//                            if (location == tmp_R.size) break;
-//                            if (strcmp(index_, tmp_R.Block[location].index) == 0) {
-//                                std::cout << tmp_R.Block[location].value << ' ';
-//                            } else {
-//                                flag = false;
-//                                break;
-//                            }
-//                        }
-//                    }
-//                }
             }
-//            std::cout << '\n';
-//            return;
-//
         }
         return -1;
     }
 
-    void clear(){
+    void clear() {
         storage_of_tree_tag_.clear();
         storage_of_block_tag_.clear();
-        ca.size=0;
+        ca.size = 0;
         BPTreeNode tmp_;
         ca.link[0] = tmp_;
         head_tag = -1; // 记录第一个数据块

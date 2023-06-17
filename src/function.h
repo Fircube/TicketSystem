@@ -1,11 +1,13 @@
 #ifndef TICKETSYSTEM_SRC_FUNCTION_H
 #define TICKETSYSTEM_SRC_FUNCTION_H
+
 #include<iostream>
 #include<cmath>
 #include<cstdio>
 #include<cstring>
 #include<string>
 #include<fstream>
+
 namespace sjtu {
     template<class T>
     void sort(T *first, T *last) {
@@ -63,7 +65,7 @@ namespace sjtu {
     }
 
     template<class T>
-    void mergesort(int l, int r,  T *re) {
+    void mergesort(int l, int r, T *re) {
         if (l == r) return;
         int mid = (l + r) >> 1;
         mergesort(l, mid, re);
@@ -85,7 +87,6 @@ namespace sjtu {
         }
         return (first + r);
         // O(logn)
-        return nullptr;
     }
 
 }

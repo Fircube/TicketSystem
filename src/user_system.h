@@ -1,15 +1,15 @@
 #ifndef TICKETSYSTEM_SRC_USERSYSTEM_H
 #define TICKETSYSTEM_SRC_USERSYSTEM_H
 
-#include<iostream>
-#include<cmath>
-#include<cstdio>
-#include<cstring>
-#include<string>
-#include<fstream>
+#include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <fstream>
 #include "bpt.h"
 #include "map.h"
-#include "String.h"
+#include "my_string.h"
 
 class User {
 public:
@@ -18,7 +18,7 @@ public:
     char password_[31];
     char name_[16];
     char mail_addr_[31];
-    short int privilege_=-1;
+    short int privilege_ = -1;
 
     User() {
         memset(username_, 0, sizeof(username_));
@@ -72,12 +72,11 @@ public:
 
 class UserSystem {
 public:
-    BPT<sjtu::String<21>,int> user_map_;
-//    sjtu::map<char[21], int> user_login_;
-    sjtu::map<std::string, int> user_login_;
+    BPT<sjtu::String<21>, int> user_map_; // username指向tag
+    sjtu::map<std::string, int> user_login_; // 是否登录，logout后指向-1
     std::fstream user_inf_;
     std::string filename_ = "user_inf";
-    int amount = 0;
+    int amount = 0; // user人数
 
     UserSystem() : user_map_("username_tree", "username_record", "user_tag") {
         user_inf_.open(filename_);
@@ -109,12 +108,8 @@ public:
 
     int AddFirstUser(const char (&new_user)[21], User &new_inf) {
         user_map_.insert(new_user, amount);
-        new_inf.tag_=amount;
+        new_inf.tag_ = amount;
         writeFile(new_inf, amount);
-        User inf;
-        readFile(inf, 0);
-        writeFile(new_inf, 0);
-        readFile(inf, 0);
         ++amount;
         return 0;
     }
@@ -124,14 +119,14 @@ public:
         if (cur_find == user_login_.end() || cur_find->second == -1) { // 当前用户未登录
             return -1;
         }
-//        int new_tag=user_map_.find(new_user);
         User cur_inf;
         readFile(cur_inf, cur_find->second);
         if (cur_inf.privilege_ <= new_inf.privilege_) return -1; // 当前权限低
         int new_tag = user_map_.find(new_user);
         if (new_tag != -1) return -1; // 新用户存在
+
         user_map_.insert(new_user, amount);
-        new_inf.tag_=amount;
+        new_inf.tag_ = amount;
         writeFile(new_inf, amount);
         ++amount;
         return 0;
@@ -147,7 +142,8 @@ public:
         User inf;
         readFile(inf, tag);
         if (strcmp(inf.password_, password) != 0) return -1; // 密码错误
-        user_login_[user] = inf.tag_; // 不知道会不会有问题
+
+        user_login_[user] = inf.tag_;
         return 0;
     }
 
@@ -167,7 +163,7 @@ public:
             return;
         }
         User q_inf;
-        if (strcmp(cur_user, q_user) == 0) {
+        if (strcmp(cur_user, q_user) == 0) { // 查询自己
             readFile(q_inf, cur_find->second);
         } else {
             int q_tag = user_map_.find(q_user);
@@ -186,14 +182,14 @@ public:
         std::cout << q_user << ' ' << q_inf.name_ << ' ' << q_inf.mail_addr_ << ' ' << q_inf.privilege_ << '\n';
     }
 
-    bool ModifyProfile(const char (&cur_user)[21], const char (&m_user)[21],const short &m_privilege,User &pre_inf) {
+    bool ModifyProfile(const char (&cur_user)[21], const char (&m_user)[21], const short &m_privilege, User &pre_inf) {
         auto cur_find = user_login_.find(cur_user);
         if (cur_find == user_login_.end() || cur_find->second == -1) { // 当前用户未登录
             return false;
         }
-        if (strcmp(cur_user, m_user) == 0) {
+        if (strcmp(cur_user, m_user) == 0) { // 修改自己
             readFile(pre_inf, cur_find->second);
-            if(pre_inf.privilege_<=m_privilege) return false;
+            if (pre_inf.privilege_ <= m_privilege) return false; // 当前权限低
         } else {
             int m_tag = user_map_.find(m_user);
             if (m_tag == -1) { // 查询用户不存在
@@ -202,7 +198,7 @@ public:
             User cur_inf;
             readFile(cur_inf, cur_find->second);
             readFile(pre_inf, m_tag);
-            if (cur_inf.privilege_ <= pre_inf.privilege_ || cur_inf.privilege_<=m_privilege) { // 当前权限低
+            if (cur_inf.privilege_ <= pre_inf.privilege_ || cur_inf.privilege_ <= m_privilege) { // 当前权限低
                 return false;
             }
         }
